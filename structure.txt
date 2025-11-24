@@ -1,0 +1,108 @@
+.
+├── README.md
+├── backend
+│   ├── .env.example
+│   ├── .eslintrc.cjs
+│   ├── .prettierrc
+│   ├── README.md
+│   ├── package.json
+│   ├── src
+│   │   ├── config
+│   │   │   ├── db.ts
+│   │   │   └── env.ts
+│   │   ├── controllers
+│   │   │   ├── adminController.ts
+│   │   │   ├── authController.ts
+│   │   │   ├── courseController.ts
+│   │   │   ├── departmentController.ts
+│   │   │   ├── gradeScaleController.ts
+│   │   │   ├── semesterController.ts
+│   │   │   ├── settingsController.ts
+│   │   │   ├── studentController.ts
+│   │   │   └── templateController.ts
+│   │   ├── index.ts
+│   │   ├── middleware
+│   │   │   └── auth.ts
+│   │   ├── models
+│   │   │   ├── Course.ts
+│   │   │   ├── Department.ts
+│   │   │   ├── GradeScale.ts
+│   │   │   ├── Semester.ts
+│   │   │   ├── SemesterTemplate.ts
+│   │   │   ├── Settings.ts
+│   │   │   └── User.ts
+│   │   ├── routes
+│   │   │   ├── adminRoutes.ts
+│   │   │   ├── authRoutes.ts
+│   │   │   ├── courseRoutes.ts
+│   │   │   ├── departmentRoutes.ts
+│   │   │   ├── gradeScaleRoutes.ts
+│   │   │   ├── semesterRoutes.ts
+│   │   │   ├── settingsRoutes.ts
+│   │   │   ├── studentRoutes.ts
+│   │   │   └── templateRoutes.ts
+│   │   ├── services
+│   │   │   └── gpaCalculator.ts
+│   │   ├── types
+│   │   │   └── express.d.ts
+│   │   └── utils
+│   │       ├── jwt.ts
+│   │       └── seed.ts
+│   └── tsconfig.json
+└── frontend
+    ├── .env.example
+    ├── .eslintrc.json
+    ├── .prettierrc
+    ├── README.md
+    ├── app
+    │   ├── admin
+    │   │   ├── courses
+    │   │   │   └── page.tsx
+    │   │   ├── departments
+    │   │   │   └── page.tsx
+    │   │   ├── grade-scale
+    │   │   │   └── page.tsx
+    │   │   ├── login
+    │   │   │   └── page.tsx
+    │   │   ├── page.tsx
+    │   │   ├── settings
+    │   │   │   └── page.tsx
+    │   │   └── students
+    │   │       ├── [id]
+    │   │       │   └── page.tsx
+    │   │       └── page.tsx
+    │   ├── calculator
+    │   │   └── page.tsx
+    │   ├── dashboard
+    │   │   └── page.tsx
+    │   ├── globals.css
+    │   ├── layout.tsx
+    │   ├── login
+    │   │   └── page.tsx
+    │   ├── page.tsx
+    │   ├── profile
+    │   │   └── page.tsx
+    │   └── signup
+    │       └── page.tsx
+    ├── components
+    │   ├── CourseRow.tsx
+    │   ├── NavBar.tsx
+    │   ├── ProgressBar.tsx
+    │   ├── SemesterAccordion.tsx
+    │   └── SummaryCard.tsx
+    ├── lib
+    │   ├── api.ts
+    │   └── gpa.ts
+    ├── next-env.d.ts
+    ├── next.config.js
+    ├── package.json
+    ├── postcss.config.js
+    ├── styles
+    ├── tailwind.config.ts
+    ├── tsconfig.json
+    ├── types
+    │   └── index.ts
+    └── utils
+        └── pdf.ts
+
+31 directories, 75 files
