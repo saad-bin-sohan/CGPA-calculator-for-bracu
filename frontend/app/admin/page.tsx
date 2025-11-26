@@ -40,7 +40,14 @@ export default function AdminDashboard() {
           <Link href="/admin/courses">Courses</Link>
           <Link href="/admin/grade-scale">Grade scale</Link>
           <Link href="/admin/students">Students</Link>
+          <Link href="/admin/templates">Templates</Link>
           <Link href="/admin/settings">Settings</Link>
+          <button
+            onClick={() => api.logout().catch(() => undefined)}
+            className="rounded border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600"
+          >
+            Logout
+          </button>
         </div>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}

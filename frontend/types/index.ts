@@ -72,3 +72,10 @@ export interface User {
   role: 'student';
   department?: Department;
 }
+
+export interface SemesterTemplate {
+  _id: string;
+  termName: string;
+  department: Department | string;
+  courses: Course[];
+}

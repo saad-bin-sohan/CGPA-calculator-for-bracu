@@ -18,11 +18,13 @@ npm run dev
 - `/profile` Update name/department
 - `/admin/login`
 - `/admin` Admin overview
-- `/admin/departments`, `/admin/courses`, `/admin/grade-scale`, `/admin/students`, `/admin/settings`
+- `/admin/departments`, `/admin/courses`, `/admin/grade-scale`, `/admin/students`, `/admin/templates`, `/admin/settings`
 
 ## Design notes
 - Tailwind for layout; responsive accordion semesters with live GPA/CGPA.
-- Grade entry supports letter, points, or percentage; maps to grade points using backend grade scale.
+- Grade entry supports letter, points, or percentage; maps to grade points using backend grade scale (W/I editable).
+- Templates: admin defines semester templates per department; guest/student calculators can apply them and still edit.
+- Guest calculator persists locally (localStorage); student dashboard persists via API and respects retake rule (latest attempt per course).
 - PDF export via `html2canvas` + `jsPDF`.
 
 ## Config

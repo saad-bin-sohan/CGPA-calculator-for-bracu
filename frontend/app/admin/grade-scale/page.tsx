@@ -13,6 +13,7 @@ export default function GradeScalePage() {
     gradePoint: 0,
     isSpecial: false
   });
+  const [editing, setEditing] = useState<GradeScaleEntry | null>(null);
 
   const load = async () => {
     const data = await api.getGradeScale();
@@ -101,21 +102,109 @@ export default function GradeScalePage() {
           <tbody className="divide-y divide-slate-100">
             {entries.map((e) => (
               <tr key={e._id}>
-                <td className="py-2 font-semibold text-slate-800">{e.letter}</td>
-                <td>{e.minPercentage}</td>
-                <td>{e.maxPercentage}</td>
-                <td>{e.gradePoint}</td>
-                <td>{e.isSpecial ? 'Yes' : 'No'}</td>
+                <td className="py-2 font-semibold text-slate-800">
+                  {editing?._id === e._id ? (
+                    <input
+                      className="w-20 rounded border border-slate-200 px-2 py-1 uppercase"
+                      value={editing.letter}
+                      onChange={(ev) => setEditing({ ...editing, letter: ev.target.value.toUpperCase() })}
+                    />
+                  ) : (
+                    e.letter
+                  )}
+                </td>
                 <td>
-                  <button
-                    className="text-xs font-semibold text-red-600"
-                    onClick={async () => {
-                      await api.admin.gradeScale.remove(e._id);
-                      load();
-                    }}
-                  >
-                    Delete
-                  </button>
+                  {editing?._id === e._id ? (
+                    <input
+                      type="number"
+                      className="w-20 rounded border border-slate-200 px-2 py-1"
+                      value={editing.minPercentage}
+                      onChange={(ev) =>
+                        setEditing({ ...editing, minPercentage: Number(ev.target.value) })
+                      }
+                    />
+                  ) : (
+                    e.minPercentage
+                  )}
+                </td>
+                <td>
+                  {editing?._id === e._id ? (
+                    <input
+                      type="number"
+                      className="w-20 rounded border border-slate-200 px-2 py-1"
+                      value={editing.maxPercentage}
+                      onChange={(ev) =>
+                        setEditing({ ...editing, maxPercentage: Number(ev.target.value) })
+                      }
+                    />
+                  ) : (
+                    e.maxPercentage
+                  )}
+                </td>
+                <td>
+                  {editing?._id === e._id ? (
+                    <input
+                      type="number"
+                      step="0.1"
+                      className="w-20 rounded border border-slate-200 px-2 py-1"
+                      value={editing.gradePoint}
+                      onChange={(ev) => setEditing({ ...editing, gradePoint: Number(ev.target.value) })}
+                    />
+                  ) : (
+                    e.gradePoint
+                  )}
+                </td>
+                <td>
+                  {editing?._id === e._id ? (
+                    <input
+                      type="checkbox"
+                      checked={editing.isSpecial}
+                      onChange={(ev) => setEditing({ ...editing, isSpecial: ev.target.checked })}
+                    />
+                  ) : (
+                    e.isSpecial ? 'Yes' : 'No'
+                  )}
+                </td>
+                <td className="space-x-2 whitespace-nowrap">
+                  {editing?._id === e._id ? (
+                    <>
+                      <button
+                        className="text-xs font-semibold text-primary"
+                        onClick={async () => {
+                          if (!editing) return;
+                          await api.admin.gradeScale.update(e._id, editing);
+                          setEditing(null);
+                          load();
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="text-xs font-semibold text-slate-500"
+                        onClick={() => setEditing(null)}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="text-xs font-semibold text-primary"
+                        onClick={() => setEditing(e)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-xs font-semibold text-red-600"
+                        onClick={async () => {
+                          await api.admin.gradeScale.remove(e._id);
+                          load();
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}

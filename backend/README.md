@@ -33,7 +33,7 @@ npm run dev            # hot reload with ts-node-dev
 - Lab inclusion controlled by Settings
 
 ## Routes (REST)
-- `POST /auth/register`, `POST /auth/login`, `POST /auth/google`, `GET /auth/me`, `PUT /auth/profile`
+- `POST /auth/register`, `POST /auth/login`, `POST /auth/google`, `GET /auth/me`, `PUT /auth/profile`, `POST /auth/logout`
 - `POST /admin/login`
 - `GET /departments` (+ admin CRUD)
 - `GET /courses`, `GET /courses/search?query=...` (+ admin CRUD)
@@ -41,7 +41,7 @@ npm run dev            # hot reload with ts-node-dev
 - `GET /settings`, `PUT /settings` (admin)
 - `GET /semesters`, `POST /semesters`, `PUT /semesters/:id`, `DELETE /semesters/:id` (student)
 - `GET /students`, `GET /students/:id` (admin)
-- `GET/POST/PUT/DELETE /templates` (admin)
+- `GET/POST/PUT/DELETE /templates` (admin create/update/delete; GET public)
 
 Auth: JWT stored in `token` httpOnly cookie; admin token includes `role: 'admin'`.
 

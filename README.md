@@ -35,5 +35,6 @@ Full-stack web app for BRAC University students to calculate CGPA/semester GPA, 
 ## Project structure
 - `frontend/` – Next.js app routes under `/app`, shared UI components, GPA calculator client logic, PDF export.
 - `backend/` – Express API, Mongoose models, GPA calculator service, admin/student routes, seed data.
+- Admin tools cover departments/courses/grade scale/settings/templates with inline edit/delete; student and guest calculators support letter/points/percentage input, retake-aware CGPA, W/I handling, lab toggles, templates, PDF export, and guest local persistence.
 
 See sub-folder READMEs for route maps, environment details, and feature specifics.

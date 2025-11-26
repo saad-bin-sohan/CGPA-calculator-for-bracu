@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 
@@ -8,8 +8,11 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const googleBtnRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +27,37 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      const google = (window as any).google;
+      if (!google || !googleBtnRef.current) return;
+      google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (resp: any) => {
+          try {
+            setLoading(true);
+            await api.googleLogin({ idToken: resp.credential });
+            router.push('/dashboard');
+          } catch (err: any) {
+            setGoogleError(err.message || 'Google login failed');
+          } finally {
+            setLoading(false);
+          }
+        }
+      });
+      google.accounts.id.renderButton(googleBtnRef.current, { theme: 'outline', size: 'large' });
+    };
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [googleClientId, router]);
 
   return (
     <div className="mx-auto max-w-md space-y-6">
@@ -60,6 +94,17 @@ export default function LoginPage() {
         >
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
+        {googleClientId && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="h-px flex-1 bg-slate-200" />
+              <span>or</span>
+              <span className="h-px flex-1 bg-slate-200" />
+            </div>
+            <div ref={googleBtnRef} className="flex justify-center" />
+            {googleError && <p className="text-sm text-red-600">{googleError}</p>}
+          </div>
+        )}
       </form>
     </div>
   );

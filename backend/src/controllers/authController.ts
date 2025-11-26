@@ -100,6 +100,12 @@ export const updateProfile = async (req: Request, res: Response) => {
   res.json({ user: sanitizeUser(user) });
 };
 
+export const logout = async (_req: Request, res: Response) => {
+  res
+    .clearCookie('token', { ...cookieOptions, secure: env.clientOrigin.startsWith('https') })
+    .json({ message: 'Logged out' });
+};
+
 const sanitizeUser = (user: any) => ({
   id: user.id,
   name: user.name,

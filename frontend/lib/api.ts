@@ -20,14 +20,29 @@ const request = async (path: string, options: RequestInit = {}) => {
 
 export const api = {
   getDepartments: () => request('/departments'),
-  getCourses: (query = '') => request(`/courses/search?query=${encodeURIComponent(query)}`),
+  getCourses: (query = '', department?: string) => {
+    const params = new URLSearchParams();
+    if (query) params.append('query', query);
+    if (department) params.append('department', department);
+    return request(`/courses/search?${params.toString()}`);
+  },
+  listCourses: (department?: string) => {
+    const params = new URLSearchParams();
+    if (department) params.append('department', department);
+    return request(`/courses${params.toString() ? `?${params.toString()}` : ''}`);
+  },
+  getTemplates: (department?: string) =>
+    request(`/templates${department ? `?department=${department}` : ''}`),
   getGradeScale: () => request('/grade-scale'),
   getSettings: () => request('/settings'),
   register: (payload: any) =>
     request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload: any) => request('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  googleLogin: (payload: any) =>
+    request('/auth/google', { method: 'POST', body: JSON.stringify(payload) }),
   updateProfile: (payload: any) =>
     request('/auth/profile', { method: 'PUT', body: JSON.stringify(payload) }),
+  logout: () => request('/auth/logout', { method: 'POST' }),
   adminLogin: (payload: any) =>
     request('/admin/login', { method: 'POST', body: JSON.stringify(payload) }),
   me: async (): Promise<User> => {
@@ -65,6 +80,12 @@ export const api = {
         request(`/courses/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
       remove: (id: string) => request(`/courses/${id}`, { method: 'DELETE' })
     },
-    settings: (payload: any) => request('/settings', { method: 'PUT', body: JSON.stringify(payload) })
+    settings: (payload: any) => request('/settings', { method: 'PUT', body: JSON.stringify(payload) }),
+    templates: {
+      create: (payload: any) => request('/templates', { method: 'POST', body: JSON.stringify(payload) }),
+      update: (id: string, payload: any) =>
+        request(`/templates/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+      remove: (id: string) => request(`/templates/${id}`, { method: 'DELETE' })
+    }
   }
 };

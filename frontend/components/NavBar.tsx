@@ -14,6 +14,14 @@ const NavBar = () => {
       .catch(() => setUser(null));
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } finally {
+      setUser(null);
+    }
+  };
+
   const links = user
     ? [
         { href: '/', label: 'Home' },
@@ -47,6 +55,14 @@ const NavBar = () => {
               {link.label}
             </Link>
           ))}
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="rounded px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
     </nav>

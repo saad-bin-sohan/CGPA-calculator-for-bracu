@@ -46,7 +46,8 @@ const SemesterAccordion = ({
           gradePoint: 0,
           inputMethod: 'letter',
           countsTowardsCGPA: true,
-          countsTowardsCredits: true
+          countsTowardsCredits: true,
+          createdAt: new Date().toISOString()
         }
       ]
     });

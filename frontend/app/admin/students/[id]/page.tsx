@@ -40,25 +40,44 @@ export default function AdminStudentProfile() {
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {summary && (
-        <div className="card grid gap-3 md:grid-cols-3">
-          <div>
-            <p className="text-xs font-semibold text-slate-500">CGPA</p>
-            <p className="text-2xl font-bold text-slate-900">{summary.cgpa.toFixed(3)}</p>
+        <>
+          <div className="card grid gap-3 md:grid-cols-3">
+            <div>
+              <p className="text-xs font-semibold text-slate-500">CGPA</p>
+              <p className="text-2xl font-bold text-slate-900">{summary.cgpa.toFixed(3)}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500">Credits</p>
+              <p className="text-2xl font-bold text-slate-900">{summary.totalCredits}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500">Courses</p>
+              <p className="text-2xl font-bold text-slate-900">{summary.totalCourses}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500">Credits</p>
-            <p className="text-2xl font-bold text-slate-900">{summary.totalCredits}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500">Courses</p>
-            <p className="text-2xl font-bold text-slate-900">{summary.totalCourses}</p>
-          </div>
-        </div>
+          {student?.department && (
+            <ProgressBar
+              completed={summary.totalCredits}
+              total={(student.department as any).totalCreditsRequired || 0}
+            />
+          )}
+        </>
       )}
       <div className="space-y-4">
         {semesters.map((s) => (
           <div key={s._id} className="card space-y-2">
-            <p className="text-sm font-semibold text-slate-800">{s.termName}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-800">{s.termName}</p>
+              {summary?.perSemester && (
+                <span className="text-xs text-slate-600">
+                  GPA:{' '}
+                  {(() => {
+                    const match = summary.perSemester.find((p) => p.termName === s.termName);
+                    return match ? match.gpa.toFixed(3) : '—';
+                  })()}
+                </span>
+              )}
+            </div>
             <div className="space-y-1 text-xs text-slate-600">
               {s.enrollments.map((e, idx) => (
                 <div key={idx} className="flex justify-between">

@@ -5,7 +5,7 @@ export const listTemplates = async (req: Request, res: Response) => {
   const { department } = req.query;
   const filters: any = {};
   if (department) filters.department = department;
-  const templates = await SemesterTemplate.find(filters).populate('courses');
+  const templates = await SemesterTemplate.find(filters).populate('courses').populate('department');
   res.json({ templates });
 };
 

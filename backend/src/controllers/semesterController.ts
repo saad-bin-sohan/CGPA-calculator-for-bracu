@@ -4,6 +4,7 @@ import { Semester } from '../models/Semester.js';
 import { Settings } from '../models/Settings.js';
 import { computeCGPA } from '../services/gpaCalculator.js';
 import { Course } from '../models/Course.js';
+import { User } from '../models/User.js';
 
 const resolveGradePoint = (entry: any, gradeScale: IGradeScale[]): { gradePoint: number; gradeLetter?: string } => {
   if (entry.inputMethod === 'points') {
@@ -86,11 +87,12 @@ export const getSemesters = async (req: Request, res: Response) => {
 
 export const createSemester = async (req: Request, res: Response) => {
   const { termName, department, enrollments = [] } = req.body;
+  const userDept = (await User.findById(req.user!.id))?.department;
   const normalizedEnrollments = await normalizeEnrollments(enrollments);
   const semester = await Semester.create({
     user: req.user!.id,
     termName,
-    department,
+    department: department || userDept,
     enrollments: normalizedEnrollments
   });
   res.status(201).json({ semester });
@@ -99,10 +101,11 @@ export const createSemester = async (req: Request, res: Response) => {
 export const updateSemester = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { termName, enrollments = [], department } = req.body;
+  const userDept = (await User.findById(req.user!.id))?.department;
   const normalizedEnrollments = await normalizeEnrollments(enrollments);
   const semester = await Semester.findOneAndUpdate(
     { _id: id, user: req.user!.id },
-    { termName, enrollments: normalizedEnrollments, department },
+    { termName, enrollments: normalizedEnrollments, department: department || userDept },
     { new: true }
   );
   if (!semester) return res.status(404).json({ message: 'Semester not found' });
