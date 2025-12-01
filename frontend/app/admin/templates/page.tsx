@@ -62,6 +62,19 @@ export default function AdminTemplates() {
     [departments, selectedDept]
   );
 
+  const getTemplateDepartmentName = (template: SemesterTemplate): string => {
+    if (!template.department) return 'Department';
+
+    // department can be a string ID or a populated Department object
+    if (typeof template.department === 'string') {
+      return (
+        departments.find((d) => d._id === template.department)?.name || 'Department'
+      );
+    }
+
+    return template.department.name || 'Department';
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -135,7 +148,7 @@ export default function AdminTemplates() {
                 <div>
                   <p className="font-semibold text-slate-800">{t.termName}</p>
                   <p className="text-xs text-slate-500">
-                    {t.courses.length} course(s) • {t.department?.name}
+                    {t.courses.length} course(s) • {getTemplateDepartmentName(t)}
                   </p>
                 </div>
                 <button
