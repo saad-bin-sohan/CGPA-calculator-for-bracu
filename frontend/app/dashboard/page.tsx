@@ -42,18 +42,24 @@ export default function DashboardPage() {
           api.me().catch(() => null),
           api.semesters.list().catch(() => ({ semesters: [], summary: null }))
         ]);
+
         setDepartments(deptRes.departments || []);
         setGradeScale(gradeRes.entries || []);
         setPrecision(settingsRes.settings?.cgpaPrecision || 10);
+
         if (meRes?.department) {
           setUserDept(meRes.department as Department);
+
           api.getTemplates((meRes.department as Department)._id).then((t) => {
             setTemplates(t.templates || []);
+
             if ((semRes.semesters || []).length === 0 && (t.templates || []).length > 0) {
-              applyTemplate(t.templates || [], meRes.department._id);
+              // ✅ FIX: use optional chaining so department may be undefined at the type level
+              applyTemplate(t.templates || [], meRes.department?._id);
             }
           });
         }
+
         if ((semRes.semesters || []).length > 0) {
           setSemesters(semRes.semesters || []);
         } else {
@@ -69,6 +75,7 @@ export default function DashboardPage() {
         setError(err.message || 'Failed to load dashboard. Please login again.');
       }
     };
+
     load();
   }, []);
 
@@ -137,9 +144,15 @@ export default function DashboardPage() {
 
   const applyTemplate = (tpls: SemesterTemplate[], deptId?: string) => {
     if (!tpls || tpls.length === 0) {
-      setSemesters([{ termName: 'Semester 1', enrollments: Array.from({ length: 4 }, () => blankEnrollment()) }]);
+      setSemesters([
+        {
+          termName: 'Semester 1',
+          enrollments: Array.from({ length: 4 }, () => blankEnrollment())
+        }
+      ]);
       return;
     }
+
     const mapped: Semester[] = tpls.map((t) => ({
       termName: t.termName,
       department: deptId || userDept?._id,
@@ -155,6 +168,7 @@ export default function DashboardPage() {
         createdAt: new Date().toISOString()
       }))
     }));
+
     setSemesters(mapped);
     setStatus('Template applied to your plan');
   };
@@ -183,9 +197,11 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
       {message && <p className="text-sm text-green-600">{message}</p>}
       {status && <p className="text-sm text-green-600">{status}</p>}
+
       <div className="card grid gap-4 md:grid-cols-3">
         <SummaryCard
           title="CGPA"
@@ -199,6 +215,7 @@ export default function DashboardPage() {
           sub={`Credits required: ${requiredCredits}`}
         />
       </div>
+
       {templates.length > 0 && (
         <div className="flex items-center gap-3 text-sm text-slate-700">
           <span>{templates.length} template(s) available for your department.</span>
@@ -210,7 +227,9 @@ export default function DashboardPage() {
           </button>
         </div>
       )}
+
       <ProgressBar completed={summary.totalCredits} total={requiredCredits} />
+
       <div id="dashboard-area" className="space-y-4">
         {semesters.map((sem, idx) => (
           <div key={sem._id || idx} className="space-y-2">
@@ -232,6 +251,7 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
       <button
         type="button"
         onClick={addSemester}
