@@ -3,8 +3,30 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import type { Route } from 'next';
 import { api } from '../lib/api';
 import { User } from '../types';
+
+type NavLink = {
+  href: Route;
+  label: string;
+};
+
+const authedLinks: NavLink[] = [
+  { href: '/', label: 'Home' },
+  { href: '/calculator', label: 'Calculator' },
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/profile', label: 'Profile' },
+  { href: '/admin', label: 'Admin' },
+];
+
+const guestLinks: NavLink[] = [
+  { href: '/', label: 'Home' },
+  { href: '/calculator', label: 'Calculator' },
+  { href: '/login', label: 'Login' },
+  { href: '/signup', label: 'Sign up' },
+  { href: '/admin/login', label: 'Admin' },
+];
 
 const NavBar = () => {
   const pathname = usePathname();
@@ -25,21 +47,7 @@ const NavBar = () => {
     }
   };
 
-  const links = user
-    ? [
-        { href: '/', label: 'Home' },
-        { href: '/calculator', label: 'Calculator' },
-        { href: '/dashboard', label: 'Dashboard' },
-        { href: '/profile', label: 'Profile' },
-        { href: '/admin', label: 'Admin' },
-      ]
-    : [
-        { href: '/', label: 'Home' },
-        { href: '/calculator', label: 'Calculator' },
-        { href: '/login', label: 'Login' },
-        { href: '/signup', label: 'Sign up' },
-        { href: '/admin/login', label: 'Admin' },
-      ];
+  const links = user ? authedLinks : guestLinks;
 
   return (
     <nav className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
