@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -7,6 +9,7 @@ import { User } from '../types';
 const NavBar = () => {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
     api
       .me()
@@ -28,21 +31,23 @@ const NavBar = () => {
         { href: '/calculator', label: 'Calculator' },
         { href: '/dashboard', label: 'Dashboard' },
         { href: '/profile', label: 'Profile' },
-        { href: '/admin', label: 'Admin' }
+        { href: '/admin', label: 'Admin' },
       ]
     : [
         { href: '/', label: 'Home' },
         { href: '/calculator', label: 'Calculator' },
         { href: '/login', label: 'Login' },
         { href: '/signup', label: 'Sign up' },
-        { href: '/admin/login', label: 'Admin' }
+        { href: '/admin/login', label: 'Admin' },
       ];
+
   return (
     <nav className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link href="/" className="text-lg font-semibold text-primary">
           BRACU CGPA
         </Link>
+
         <div className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-600">
           {links.map((link) => (
             <Link
@@ -55,6 +60,7 @@ const NavBar = () => {
               {link.label}
             </Link>
           ))}
+
           {user && (
             <button
               onClick={handleLogout}
@@ -70,4 +76,3 @@ const NavBar = () => {
 };
 
 export default NavBar;
-'use client';
