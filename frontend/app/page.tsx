@@ -60,7 +60,7 @@ export default function Home() {
               BRAC University CGPA Suite
             </div>
             <h1 className="text-4xl font-semibold text-slate-900 sm:text-5xl">
-              A premium CGPA calculator built for confident academic planning.
+              The CGPA calculator built for confident academic planning.
             </h1>
             <p className="text-base text-slate-600 sm:text-lg">
               Plan semesters, handle retakes, and track graduation progress with a sleek, intelligent
