@@ -1,5 +1,6 @@
 'use client';
 
+import type { Route } from 'next';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -15,6 +16,12 @@ import {
 import { api } from '../lib/api';
 import { cn } from '../lib/cn';
 
+interface NavItem {
+  href: Route;
+  label: string;
+  icon: typeof LayoutGrid;
+}
+
 const navItems = [
   { href: '/admin', label: 'Overview', icon: LayoutGrid },
   { href: '/admin/departments', label: 'Departments', icon: Building2 },
@@ -23,7 +30,7 @@ const navItems = [
   { href: '/admin/students', label: 'Students', icon: Users },
   { href: '/admin/templates', label: 'Templates', icon: FileStack },
   { href: '/admin/settings', label: 'Settings', icon: Settings }
-];
+] as const satisfies readonly NavItem[];
 
 interface Props {
   title: string;
