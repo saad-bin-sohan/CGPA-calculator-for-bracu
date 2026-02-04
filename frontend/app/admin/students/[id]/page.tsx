@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { BookOpen, Layers, Sigma } from 'lucide-react';
 import { api } from '../../../../lib/api';
 import { Semester, Summary, User } from '../../../../types';
 import ProgressBar from '../../../../components/ProgressBar';
+import SummaryCard from '../../../../components/SummaryCard';
+import AdminShell from '../../../../components/AdminShell';
+import Card from '../../../../components/ui/Card';
 
 export default function AdminStudentProfile() {
   const params = useParams();
@@ -29,43 +33,49 @@ export default function AdminStudentProfile() {
   if (!id) return null;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Student Profile</h1>
-        {student && (
-          <p className="text-slate-600">
-            {student.name} — {student.email}
-          </p>
-        )}
-      </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <AdminShell
+      title="Student Profile"
+      subtitle={student ? `${student.name} • ${student.email}` : 'Loading student'}
+    >
+      {error && (
+        <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-2 text-sm text-danger-700">
+          {error}
+        </div>
+      )}
       {summary && (
         <>
-          <div className="card grid gap-3 md:grid-cols-3">
-            <div>
-              <p className="text-xs font-semibold text-slate-500">CGPA</p>
-              <p className="text-2xl font-bold text-slate-900">{summary.cgpa.toFixed(3)}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500">Credits</p>
-              <p className="text-2xl font-bold text-slate-900">{summary.totalCredits}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500">Courses</p>
-              <p className="text-2xl font-bold text-slate-900">{summary.totalCourses}</p>
-            </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <SummaryCard
+              title="CGPA"
+              value={summary.cgpa.toFixed(3)}
+              icon={<Sigma className="h-5 w-5" />}
+              tone="primary"
+            />
+            <SummaryCard
+              title="Credits"
+              value={`${summary.totalCredits}`}
+              icon={<Layers className="h-5 w-5" />}
+              tone="accent"
+            />
+            <SummaryCard
+              title="Courses"
+              value={`${summary.totalCourses}`}
+              icon={<BookOpen className="h-5 w-5" />}
+            />
           </div>
           {student?.department && (
-            <ProgressBar
-              completed={summary.totalCredits}
-              total={(student.department as any).totalCreditsRequired || 0}
-            />
+            <Card>
+              <ProgressBar
+                completed={summary.totalCredits}
+                total={(student.department as any).totalCreditsRequired || 0}
+              />
+            </Card>
           )}
         </>
       )}
       <div className="space-y-4">
         {semesters.map((s) => (
-          <div key={s._id} className="card space-y-2">
+          <Card key={s._id} className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-800">{s.termName}</p>
               {summary?.perSemester && (
@@ -80,7 +90,7 @@ export default function AdminStudentProfile() {
             </div>
             <div className="space-y-1 text-xs text-slate-600">
               {s.enrollments.map((e, idx) => (
-                <div key={idx} className="flex justify-between">
+                <div key={idx} className="flex flex-wrap justify-between gap-2">
                   <span>
                     {e.courseCode} — {e.courseTitle}
                   </span>
@@ -90,9 +100,9 @@ export default function AdminStudentProfile() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
-    </div>
+    </AdminShell>
   );
 }

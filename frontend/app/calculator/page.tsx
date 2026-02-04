@@ -1,9 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { FileDown, Building2, Sigma, Layers } from 'lucide-react';
 import SemesterAccordion from '../../components/SemesterAccordion';
 import ProgressBar from '../../components/ProgressBar';
 import SummaryCard from '../../components/SummaryCard';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import EmptyState from '../../components/ui/EmptyState';
 import { api } from '../../lib/api';
 import { computeSummary } from '../../lib/gpa';
 import { Department, Course, GradeScaleEntry, Semester, EnrollmentInput, SemesterTemplate } from '../../types';
@@ -69,6 +73,10 @@ export default function CalculatorPage() {
   const summary = useMemo(() => computeSummary(semesters, precision), [semesters, precision]);
   const requiredCredits =
     departments.find((d) => d._id === selectedDepartment)?.totalCreditsRequired || 136;
+  const selectedDept = useMemo(
+    () => departments.find((d) => d._id === selectedDepartment),
+    [departments, selectedDepartment]
+  );
 
   const updateSemester = (idx: number, next: Semester) => {
     const clone = [...semesters];
@@ -118,76 +126,112 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Guest CGPA Calculator</h1>
-          <p className="text-slate-600">No login required. Data stays in your browser.</p>
+          <h1 className="text-3xl font-semibold text-slate-900">Guest CGPA Calculator</h1>
+          <p className="text-sm text-slate-600">
+            No login required. Your plan is stored locally in this browser.
+          </p>
         </div>
-        <button
-          className="rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+        <Button
+          variant="secondary"
           onClick={() => exportElementToPDF('calculator-area', 'cgpa-plan.pdf')}
         >
-          Export as PDF
-        </button>
+          <FileDown className="h-4 w-4" />
+          Export PDF
+        </Button>
       </div>
-      <div className="card grid gap-4 md:grid-cols-3">
-        <div>
-          <label className="block text-sm font-medium text-slate-700">Department</label>
-          <select
-            className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
-            value={selectedDepartment}
-            onChange={(e) => setSelectedDepartment(e.target.value)}
-          >
-            <option value="">Select</option>
-            {departments.map((d) => (
-              <option key={d._id} value={d._id}>
-                {d.name} ({d.code})
-              </option>
+
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-6">
+          <Card className="space-y-4">
+            <div>
+              <label className="label">Department</label>
+              <select
+                className="select mt-2"
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+              >
+                <option value="">Select</option>
+                {departments.map((d) => (
+                  <option key={d._id} value={d._id}>
+                    {d.name} ({d.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {templates.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary-700">
+                <span>{templates.length} template(s) available for this department.</span>
+                <Button variant="outline" size="sm" onClick={() => applyTemplate(templates)}>
+                  Apply template
+                </Button>
+              </div>
+            )}
+            {status && (
+              <div className="rounded-2xl border border-success/20 bg-success/10 px-4 py-2 text-xs font-semibold text-success-700">
+                {status}
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <ProgressBar completed={summary.totalCredits} total={requiredCredits} />
+          </Card>
+
+          <div id="calculator-area" className="space-y-4">
+            {semesters.length === 0 && (
+              <EmptyState
+                title="No semesters yet"
+                description="Add a semester to start planning your CGPA journey."
+                actionLabel="Add semester"
+                onAction={addSemester}
+              />
+            )}
+            {semesters.map((semester, idx) => (
+              <SemesterAccordion
+                key={idx}
+                semester={semester}
+                onChange={(next) => updateSemester(idx, next)}
+                onRemove={() => removeSemester(idx)}
+                gradeScale={gradeScale}
+                courseOptions={courses}
+                onCourseSearch={searchCourses}
+                precision={precision}
+              />
             ))}
-          </select>
+          </div>
+
+          <Button variant="outline" onClick={addSemester}>
+            + Add semester
+          </Button>
         </div>
-        <SummaryCard title="CGPA" value={summary.cgpa.toFixed(Math.min(precision, 10))} />
-        <SummaryCard
-          title="Completed credits"
-          value={`${summary.totalCredits}`}
-          sub={`of ${requiredCredits} required`}
-        />
-      </div>
-      {templates.length > 0 && (
-        <div className="flex items-center gap-3 text-sm text-slate-700">
-          <span>{templates.length} template(s) available for this department.</span>
-          <button
-            className="rounded border border-primary px-3 py-2 text-xs font-semibold text-primary"
-            onClick={() => applyTemplate(templates)}
-          >
-            Apply template
-          </button>
-        </div>
-      )}
-      {status && <p className="text-xs text-green-600">{status}</p>}
-      <ProgressBar completed={summary.totalCredits} total={requiredCredits} />
-      <div id="calculator-area" className="space-y-4">
-        {semesters.map((semester, idx) => (
-          <SemesterAccordion
-            key={idx}
-            semester={semester}
-            onChange={(next) => updateSemester(idx, next)}
-            onRemove={() => removeSemester(idx)}
-            gradeScale={gradeScale}
-            courseOptions={courses}
-            onCourseSearch={searchCourses}
-            precision={precision}
+
+        <div className="space-y-4 lg:sticky lg:top-24">
+          <SummaryCard
+            title="CGPA"
+            value={summary.cgpa.toFixed(Math.min(precision, 10))}
+            sub={`${summary.totalCourses} unique courses`}
+            icon={<Sigma className="h-5 w-5" />}
+            tone="primary"
           />
-        ))}
+          <SummaryCard
+            title="Completed credits"
+            value={`${summary.totalCredits}`}
+            sub={`of ${requiredCredits} required`}
+            icon={<Layers className="h-5 w-5" />}
+            tone="accent"
+          />
+          <SummaryCard
+            title="Department"
+            value={selectedDept ? selectedDept.code : 'Not selected'}
+            sub={selectedDept ? selectedDept.name : 'Select a department to load templates'}
+            icon={<Building2 className="h-5 w-5" />}
+          />
+        </div>
       </div>
-      <button
-        type="button"
-        onClick={addSemester}
-        className="rounded-md border border-dashed border-primary px-4 py-2 text-sm font-semibold text-primary"
-      >
-        + Add semester
-      </button>
     </div>
   );
 }

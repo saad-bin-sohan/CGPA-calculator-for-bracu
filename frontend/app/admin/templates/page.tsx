@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
 import { api } from '../../../lib/api';
+import AdminShell from '../../../components/AdminShell';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Badge from '../../../components/ui/Badge';
 import { Course, Department, SemesterTemplate } from '../../../types';
 
 export default function AdminTemplates() {
@@ -14,6 +19,7 @@ export default function AdminTemplates() {
     courses: []
   });
   const [message, setMessage] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const loadTemplates = async (dept?: string) => {
     const data = await api.getTemplates(dept);
@@ -33,6 +39,7 @@ export default function AdminTemplates() {
       setCourses([]);
     }
     setForm({ termName: '', courses: [] });
+    setQuery('');
   }, [selectedDept]);
 
   const toggleCourse = (id: string) => {
@@ -76,17 +83,14 @@ export default function AdminTemplates() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Semester Templates</h1>
-        <p className="text-slate-600">
-          Predefine semester course sets per department to auto-populate student/guest plans.
-        </p>
-      </div>
-      <div className="card space-y-3">
-        <label className="block text-sm font-medium text-slate-700">Department</label>
+    <AdminShell
+      title="Semester Templates"
+      subtitle="Predefine semester course sets per department to auto-populate student and guest plans."
+    >
+      <Card className="space-y-3">
+        <label className="label">Department</label>
         <select
-          className="w-full rounded border border-slate-200 px-3 py-2"
+          className="select"
           value={selectedDept}
           onChange={(e) => setSelectedDept(e.target.value)}
         >
@@ -97,50 +101,72 @@ export default function AdminTemplates() {
             </option>
           ))}
         </select>
-      </div>
+      </Card>
       {selectedDept && (
-        <form onSubmit={saveTemplate} className="card space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Term name</label>
-              <input
-                className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
-                value={form.termName}
-                onChange={(e) => setForm({ ...form, termName: e.target.value })}
-                placeholder="e.g., Spring 2025"
-                required
-              />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-700">Courses ({selectedDeptName})</p>
-              <div className="mt-2 max-h-40 overflow-y-auto rounded border border-slate-200 p-2">
-                {courses.map((c) => (
-                  <label key={c._id} className="flex items-center gap-2 text-xs text-slate-700">
+        <Card className="space-y-4">
+          <form onSubmit={saveTemplate} className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="label">Term name</label>
+                <input
+                  className="input mt-2"
+                  value={form.termName}
+                  onChange={(e) => setForm({ ...form, termName: e.target.value })}
+                  placeholder="e.g., Spring 2025"
+                  required
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <p className="label">Courses ({selectedDeptName})</p>
+                  <div className="relative w-40">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" />
                     <input
-                      type="checkbox"
-                      checked={form.courses.includes(c._id)}
-                      onChange={() => toggleCourse(c._id)}
+                      className="input pl-8 text-xs"
+                      placeholder="Filter"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
                     />
-                    {c.code} — {c.title}
-                  </label>
-                ))}
-                {courses.length === 0 && (
-                  <p className="text-xs text-slate-500">Add courses for this department first.</p>
-                )}
+                  </div>
+                </div>
+                <div className="mt-2 max-h-44 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 p-3">
+                  {courses
+                    .filter(
+                      (c) =>
+                        !query ||
+                        c.code.toLowerCase().includes(query.toLowerCase()) ||
+                        c.title.toLowerCase().includes(query.toLowerCase())
+                    )
+                    .map((c) => (
+                      <label key={c._id} className="flex items-center gap-2 text-xs text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={form.courses.includes(c._id)}
+                          onChange={() => toggleCourse(c._id)}
+                        />
+                        {c.code} — {c.title}
+                      </label>
+                    ))}
+                  {courses.length === 0 && (
+                    <p className="text-xs text-slate-500">Add courses for this department first.</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          {message && <p className="text-sm text-green-600">{message}</p>}
-          <button
-            type="submit"
-            className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white"
-          >
-            Save template
-          </button>
-        </form>
+            {message && (
+              <div className="rounded-2xl border border-success/20 bg-success/10 px-4 py-2 text-xs font-semibold text-success-700">
+                {message}
+              </div>
+            )}
+            <Button type="submit">Save template</Button>
+          </form>
+        </Card>
       )}
-      <div className="card space-y-3">
-        <h2 className="text-lg font-semibold text-slate-800">Templates</h2>
+      <Card className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-800">Templates</h2>
+          <Badge variant="primary">{templates.length} total</Badge>
+        </div>
         <div className="divide-y divide-slate-100">
           {templates.map((t) => (
             <div key={t._id} className="py-3">
@@ -151,28 +177,27 @@ export default function AdminTemplates() {
                     {t.courses.length} course(s) • {getTemplateDepartmentName(t)}
                   </p>
                 </div>
-                <button
-                  className="text-xs font-semibold text-red-600"
+                <Button
+                  size="sm"
+                  variant="danger"
                   onClick={async () => {
                     await api.admin.templates.remove(t._id);
                     loadTemplates(selectedDept);
                   }}
                 >
                   Delete
-                </button>
+                </Button>
               </div>
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
                 {t.courses.map((c) => (
-                  <span key={c._id} className="rounded bg-slate-100 px-2 py-1">
-                    {c.code}
-                  </span>
+                  <Badge key={c._id}>{c.code}</Badge>
                 ))}
               </div>
             </div>
           ))}
           {templates.length === 0 && <p className="py-2 text-sm text-slate-600">No templates yet.</p>}
         </div>
-      </div>
-    </div>
+      </Card>
+    </AdminShell>
   );
 }

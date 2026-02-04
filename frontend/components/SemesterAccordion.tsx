@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react';
 import { Course, EnrollmentInput, GradeScaleEntry, Semester } from '../types';
 import { computeSummary } from '../lib/gpa';
 import CourseRow from './CourseRow';
+import Button from './ui/Button';
+import ConfirmDialog from './ui/ConfirmDialog';
+import Badge from './ui/Badge';
 
 interface Props {
   semester: Semester;
@@ -23,6 +26,7 @@ const SemesterAccordion = ({
   precision
 }: Props) => {
   const [open, setOpen] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const summary = useMemo(
     () => computeSummary([semester], precision).perSemester[0],
     [semester, precision]
@@ -59,60 +63,84 @@ const SemesterAccordion = ({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between px-4 py-3 text-left"
-        onClick={() => setOpen((o) => !o)}
-      >
-        <div>
-          <p className="text-sm font-semibold text-slate-800">{semester.termName}</p>
-          <p className="text-xs text-slate-500">
-            GPA: {summary?.gpa?.toFixed(precision)} • Credits: {summary?.credits ?? 0}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            className="rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-600"
-          >
-            Delete semester
-          </button>
-          <span className="text-slate-500">{open ? '▲' : '▼'}</span>
-        </div>
-      </button>
-      {open && (
-        <div className="space-y-4 border-t border-slate-100 p-4">
-          {semester.enrollments.map((enroll, idx) => (
-            <CourseRow
-              key={idx}
-              enrollment={enroll}
-              onChange={(next) => updateEnrollment(idx, next)}
-              onRemove={() => removeCourse(idx)}
-              gradeScale={gradeScale}
-              courseOptions={courseOptions}
-              onCourseSearch={onCourseSearch}
-            />
-          ))}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={addCourse}
-              className="rounded-md border border-dashed border-primary px-4 py-2 text-sm font-semibold text-primary"
-            >
-              + Add course
-            </button>
-            <div className="text-xs text-slate-500">
-              Semester GPA updates automatically as you change grades.
+    <>
+      <div className="rounded-4xl border border-slate-200 bg-white/80 shadow-soft backdrop-blur">
+        <button
+          type="button"
+          className="flex w-full flex-col gap-3 px-5 py-4 text-left sm:flex-row sm:items-center sm:justify-between"
+          onClick={() => setOpen((o) => !o)}
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-400 text-lg font-semibold text-white shadow-glow">
+              {semester.termName.split(' ')[0]?.[0] || 'S'}
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-slate-900">{semester.termName}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span>GPA: {summary?.gpa?.toFixed(precision)}</span>
+                <span>•</span>
+                <span>Credits: {summary?.credits ?? 0}</span>
+                <Badge variant="primary">{semester.enrollments.length} courses</Badge>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmOpen(true);
+              }}
+            >
+              Delete semester
+            </Button>
+            <span
+              className={`text-slate-500 transition ${open ? 'rotate-180' : 'rotate-0'}`}
+              aria-hidden="true"
+            >
+              ▼
+            </span>
+          </div>
+        </button>
+        {open && (
+          <div className="space-y-4 border-t border-slate-100 p-5 animate-fade-up">
+            {semester.enrollments.map((enroll, idx) => (
+              <CourseRow
+                key={idx}
+                enrollment={enroll}
+                onChange={(next) => updateEnrollment(idx, next)}
+                onRemove={() => removeCourse(idx)}
+                gradeScale={gradeScale}
+                courseOptions={courseOptions}
+                onCourseSearch={onCourseSearch}
+              />
+            ))}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Button type="button" variant="outline" onClick={addCourse}>
+                + Add course
+              </Button>
+              <div className="text-xs text-slate-500">
+                Semester GPA updates automatically as you change grades.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete semester?"
+        description="This will remove the semester and all of its courses."
+        confirmLabel="Delete semester"
+        danger
+        onConfirm={() => {
+          setConfirmOpen(false);
+          onRemove();
+        }}
+        onClose={() => setConfirmOpen(false)}
+      />
+    </>
   );
 };
 

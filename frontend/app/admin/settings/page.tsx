@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
+import AdminShell from '../../../components/AdminShell';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Toggle from '../../../components/ui/Toggle';
 import { Settings } from '../../../types';
 
 export default function AdminSettings() {
@@ -22,53 +26,42 @@ export default function AdminSettings() {
   if (!settings) return <p>Loading settings…</p>;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-600">Adjust CGPA rounding and lab counting rules.</p>
-      </div>
-      <form onSubmit={save} className="card space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700">CGPA decimal precision</label>
-          <input
-            type="number"
-            className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
-            value={settings.cgpaPrecision}
-            onChange={(e) => setSettings({ ...settings, cgpaPrecision: Number(e.target.value) })}
-            min={0}
-            max={12}
-          />
-        </div>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+    <AdminShell title="Settings" subtitle="Adjust CGPA rounding and lab counting rules.">
+      <Card className="space-y-4">
+        <form onSubmit={save} className="space-y-4">
+          <div>
+            <label className="label">CGPA decimal precision</label>
             <input
-              type="checkbox"
+              type="number"
+              className="input mt-2"
+              value={settings.cgpaPrecision}
+              onChange={(e) => setSettings({ ...settings, cgpaPrecision: Number(e.target.value) })}
+              min={0}
+              max={12}
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Toggle
               checked={settings.labCountsTowardsCGPA}
-              onChange={(e) =>
-                setSettings({ ...settings, labCountsTowardsCGPA: e.target.checked })
-              }
+              onChange={(next) => setSettings({ ...settings, labCountsTowardsCGPA: next })}
+              label="Lab counts toward CGPA"
+              description="Include lab grades when calculating CGPA."
             />
-            Lab counts toward CGPA
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
+            <Toggle
               checked={settings.labCountsTowardsCredits}
-              onChange={(e) =>
-                setSettings({ ...settings, labCountsTowardsCredits: e.target.checked })
-              }
+              onChange={(next) => setSettings({ ...settings, labCountsTowardsCredits: next })}
+              label="Lab counts toward credits"
+              description="Include lab credits in graduation progress."
             />
-            Lab counts toward credits
-          </label>
-        </div>
-        {message && <p className="text-sm text-green-600">{message}</p>}
-        <button
-          type="submit"
-          className="rounded bg-primary px-4 py-2 text-sm font-semibold text-white"
-        >
-          Save settings
-        </button>
-      </form>
-    </div>
+          </div>
+          {message && (
+            <div className="rounded-2xl border border-success/20 bg-success/10 px-4 py-2 text-sm text-success-700">
+              {message}
+            </div>
+          )}
+          <Button type="submit">Save settings</Button>
+        </form>
+      </Card>
+    </AdminShell>
   );
 }
