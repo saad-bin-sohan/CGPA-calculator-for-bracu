@@ -50,7 +50,7 @@ const CourseRow = ({ enrollment, onChange, onRemove, courseOptions, onCourseSear
     <>
       <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-soft backdrop-blur sm:p-5">
         <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-3">
             <label className="label">Course</label>
             <input
               list="course-options"
@@ -85,16 +85,16 @@ const CourseRow = ({ enrollment, onChange, onRemove, courseOptions, onCourseSear
             />
           </div>
 
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <label className="label">Input mode</label>
-            <div className="mt-2 flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+            <div className="mt-2 flex overflow-hidden rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
               {(['letter', 'points', 'percentage'] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => onChange({ ...enrollment, inputMethod: mode })}
                   className={cn(
-                    'flex-1 rounded-xl px-2 py-2 text-xs font-semibold capitalize transition',
+                    'flex-1 whitespace-nowrap truncate rounded-xl px-2 py-2 text-xs font-semibold capitalize transition',
                     enrollment.inputMethod === mode
                       ? 'bg-primary/10 text-primary-700'
                       : 'text-slate-500 hover:text-primary-700'
