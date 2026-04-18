@@ -1,34 +1,23 @@
 import type { ReactNode } from 'react';
-import { cn } from '../lib/cn';
 
 interface Props {
   title: string;
   value: string;
   sub?: string;
   icon?: ReactNode;
-  tone?: 'primary' | 'accent' | 'neutral' | 'success';
+  [key: string]: unknown;
 }
 
-const toneStyles: Record<NonNullable<Props['tone']>, string> = {
-  primary: 'border-primary/15 bg-primary/5',
-  accent: 'border-accent/15 bg-accent/5',
-  neutral: 'border-slate-200 bg-white/80',
-  success: 'border-success/15 bg-success/5'
-};
-
-const SummaryCard = ({ title, value, sub, icon, tone = 'neutral' }: Props) => (
-  <div
-    className={cn(
-      'rounded-3xl border p-5 shadow-soft backdrop-blur transition hover:-translate-y-1 hover:shadow-card',
-      toneStyles[tone]
-    )}
-  >
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
-      {icon && <span className="text-slate-400">{icon}</span>}
+const SummaryCard = ({ title, value, sub, icon }: Props) => (
+  <div className="p-4">
+    <div className="flex items-center justify-between gap-2">
+      <p className="text-xs font-semibold uppercase tracking-widest text-stone-500">{title}</p>
+      {icon && <span className="text-stone-300">{icon}</span>}
     </div>
-    <p className="mt-2 text-3xl font-bold text-slate-900 tabular-nums">{value}</p>
-    {sub && <p className="mt-1 text-xs text-slate-600">{sub}</p>}
+    <p className="mt-2 font-display text-2xl font-normal tabular-nums text-stone-900">
+      {value}
+    </p>
+    {sub && <p className="mt-0.5 text-xs text-stone-500">{sub}</p>}
   </div>
 );
 
