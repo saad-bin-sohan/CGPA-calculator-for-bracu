@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Mail, Lock } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck } from 'lucide-react';
 import Button from '../../../components/ui/Button';
-import Card from '../../../components/ui/Card';
 import { api } from '../../../lib/api';
 
 export default function AdminLogin() {
@@ -22,62 +22,73 @@ export default function AdminLogin() {
       await api.adminLogin({ email, password });
       router.push('/admin');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Login failed. Check your admin credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <Card className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-center">
-        <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-danger/20 bg-danger/10 px-4 py-1 text-xs font-semibold uppercase text-danger-700">
-            <ShieldCheck className="h-4 w-4" />
-            Admin console
-          </div>
-          <h1 className="text-3xl font-semibold text-slate-900">Administrator Login</h1>
-          <p className="text-sm text-slate-600">
-            Manage departments, course catalog, grading scales, templates, and student profiles.
-          </p>
-          <div className="card-subtle text-xs text-slate-600">
-            This area is restricted. Please use authorized admin credentials.
-          </div>
+    <div className="flex min-h-[calc(100vh-56px)] items-start justify-center py-16 sm:items-center sm:py-0">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-stone-400">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Restricted access · Admin only
         </div>
 
-        <form onSubmit={submit} className="space-y-4">
-          <label className="block space-y-2">
-            <span className="label">Email</span>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="email"
-                className="input pl-11"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          </label>
-          <label className="block space-y-2">
-            <span className="label">Password</span>
-            <div className="relative">
-              <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="password"
-                className="input pl-11"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </label>
+        <h1 className="font-display text-3xl font-normal text-stone-900">Administrator sign in</h1>
+        <p className="mt-1.5 text-sm text-stone-500">
+          Use your authorized admin credentials to access the management console.
+        </p>
+
+        <form onSubmit={submit} className="mt-8 space-y-5">
+          <div>
+            <label htmlFor="admin-email" className="label mb-2 block">
+              Email
+            </label>
+            <input
+              id="admin-email"
+              type="email"
+              className="input"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="admin-password" className="label mb-2 block">
+              Password
+            </label>
+            <input
+              id="admin-password"
+              type="password"
+              className="input"
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
           {error && <p className="text-sm text-danger-700">{error}</p>}
+
           <Button type="submit" loading={loading} className="w-full">
-            Login as admin
+            Sign in as administrator
           </Button>
         </form>
-      </Card>
+
+        <p className="mt-8 border-t border-stone-200 pt-6 text-xs text-stone-500">
+          Not an admin?{' '}
+          <Link
+            href="/login"
+            className="font-semibold text-stone-700 transition-colors hover:text-primary-700"
+          >
+            Student sign in →
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
