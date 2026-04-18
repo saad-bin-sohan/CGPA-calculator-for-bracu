@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
 import AdminShell from '../../../components/AdminShell';
-import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
-import Toggle from '../../../components/ui/Toggle';
+import Switch from '../../../components/ui/Switch';
 import { Settings } from '../../../types';
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     api.getSettings().then((data) => setSettings(data.settings));
@@ -19,49 +19,100 @@ export default function AdminSettings() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings) return;
-    await api.admin.settings(settings);
-    setMessage('Settings saved');
+    setLoading(true);
+    try {
+      await api.admin.settings(settings);
+      setMessage('Settings saved.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (!settings) return <p>Loading settings…</p>;
+  if (!settings) {
+    return (
+      <AdminShell title="Settings" subtitle="Adjust CGPA rounding and lab counting rules.">
+        <p className="text-sm text-stone-400">Loading settings…</p>
+      </AdminShell>
+    );
+  }
 
   return (
-    <AdminShell title="Settings" subtitle="Adjust CGPA rounding and lab counting rules.">
-      <Card className="space-y-4">
-        <form onSubmit={save} className="space-y-4">
-          <div>
-            <label className="label">CGPA decimal precision</label>
-            <input
-              type="number"
-              className="input mt-2"
-              value={settings.cgpaPrecision}
-              onChange={(e) => setSettings({ ...settings, cgpaPrecision: Number(e.target.value) })}
-              min={0}
-              max={12}
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Toggle
-              checked={settings.labCountsTowardsCGPA}
-              onChange={(next) => setSettings({ ...settings, labCountsTowardsCGPA: next })}
-              label="Lab counts toward CGPA"
-              description="Include lab grades when calculating CGPA."
-            />
-            <Toggle
-              checked={settings.labCountsTowardsCredits}
-              onChange={(next) => setSettings({ ...settings, labCountsTowardsCredits: next })}
-              label="Lab counts toward credits"
-              description="Include lab credits in graduation progress."
-            />
-          </div>
-          {message && (
-            <div className="rounded-2xl border border-success/20 bg-success/10 px-4 py-2 text-sm text-success-700">
-              {message}
+    <AdminShell
+      title="Settings"
+      subtitle="Adjust CGPA rounding precision and lab credit counting rules."
+    >
+      <form onSubmit={save} className="max-w-md space-y-8">
+        <div>
+          <label htmlFor="cgpa-precision" className="label mb-2 block">
+            CGPA decimal precision
+          </label>
+          <input
+            id="cgpa-precision"
+            type="number"
+            className="input w-24 font-mono"
+            value={settings.cgpaPrecision}
+            onChange={(e) =>
+              setSettings({ ...settings, cgpaPrecision: Number(e.target.value) })
+            }
+            min={0}
+            max={12}
+          />
+          <p className="mt-1.5 text-xs text-stone-500">
+            Number of decimal places shown in CGPA calculations. Range: 0–12.
+          </p>
+        </div>
+
+        <hr className="border-stone-200" />
+
+        <div className="space-y-6">
+          <h2 className="text-sm font-semibold text-stone-700">Lab course rules</h2>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={settings.labCountsTowardsCGPA}
+                onChange={(next) =>
+                  setSettings({ ...settings, labCountsTowardsCGPA: next })
+                }
+                id="lab-cgpa"
+              />
+              <span className="text-sm font-medium text-stone-700">
+                Lab courses count toward CGPA
+              </span>
             </div>
-          )}
-          <Button type="submit">Save settings</Button>
-        </form>
-      </Card>
+            <p className="pl-11 text-xs text-stone-500">
+              When enabled, lab course grades are included in CGPA calculations.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={settings.labCountsTowardsCredits}
+                onChange={(next) =>
+                  setSettings({ ...settings, labCountsTowardsCredits: next })
+                }
+                id="lab-credits"
+              />
+              <span className="text-sm font-medium text-stone-700">
+                Lab courses count toward graduation credits
+              </span>
+            </div>
+            <p className="pl-11 text-xs text-stone-500">
+              When enabled, lab course credits contribute to graduation progress tracking.
+            </p>
+          </div>
+        </div>
+
+        <hr className="border-stone-200" />
+
+        <div className="flex items-center gap-4">
+          <Button type="submit" loading={loading}>
+            Save settings
+          </Button>
+          {message && <p className="text-sm font-semibold text-success-700">{message}</p>}
+        </div>
+      </form>
     </AdminShell>
   );
 }

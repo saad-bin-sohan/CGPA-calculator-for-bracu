@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { api } from '../../../lib/api';
 import AdminShell from '../../../components/AdminShell';
-import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import Switch from '../../../components/ui/Switch';
 import { Course, Department } from '../../../types';
+import { cn } from '../../../lib/cn';
 
 export default function AdminCourses() {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -20,7 +20,7 @@ export default function AdminCourses() {
     departments: [],
     countsTowardsCGPA: true,
     countsTowardsCredits: true,
-    active: true
+    active: true,
   });
   const [editing, setEditing] = useState<Partial<Course> | null>(null);
   const [query, setQuery] = useState('');
@@ -46,9 +46,9 @@ export default function AdminCourses() {
       departments: [],
       countsTowardsCGPA: true,
       countsTowardsCredits: true,
-      active: true
+      active: true,
     });
-    load();
+    await load();
   };
 
   const filtered = useMemo(() => {
@@ -61,73 +61,103 @@ export default function AdminCourses() {
 
   const toggleDepartment = (id: string) => {
     setForm((prev) => {
-      const departmentsSet = new Set(prev.departments as string[]);
-      if (departmentsSet.has(id)) departmentsSet.delete(id);
-      else departmentsSet.add(id);
-      return { ...prev, departments: Array.from(departmentsSet) };
+      const set = new Set(prev.departments as string[]);
+      if (set.has(id)) set.delete(id);
+      else set.add(id);
+      return { ...prev, departments: Array.from(set) };
     });
   };
 
   const toggleDepartmentForEditing = (id: string) => {
     if (!editing) return;
-    const departmentsSet = new Set((editing.departments as string[]) || []);
-    if (departmentsSet.has(id)) departmentsSet.delete(id);
-    else departmentsSet.add(id);
-    setEditing({ ...editing, departments: Array.from(departmentsSet) });
+    const set = new Set((editing.departments as string[]) || []);
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+    setEditing({ ...editing, departments: Array.from(set) });
   };
+
+  const DeptPill = ({
+    deptId,
+    code,
+    selected,
+    onToggle,
+  }: {
+    deptId: string;
+    code: string;
+    selected: boolean;
+    onToggle: (id: string) => void;
+  }) => (
+    <button
+      key={deptId}
+      type="button"
+      onClick={() => onToggle(deptId)}
+      className={cn(
+        'px-2 py-1 font-mono text-xs font-semibold transition-colors',
+        selected
+          ? 'bg-stone-900 text-white'
+          : 'border border-stone-300 text-stone-500 hover:border-stone-500 hover:text-stone-800'
+      )}
+    >
+      {code}
+    </button>
+  );
 
   return (
     <AdminShell title="Courses" subtitle="Create and manage the course catalog.">
-      <Card className="space-y-4">
-        <form onSubmit={save} className="grid gap-3 md:grid-cols-6">
-          <input
-            className="input uppercase"
-            placeholder="Code"
-            value={form.code || ''}
-            onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-            required
-          />
-          <input
-            className="input md:col-span-2"
-            placeholder="Title"
-            value={form.title || ''}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            required
-          />
-          <input
-            type="number"
-            className="input"
-            placeholder="Credits"
-            value={form.credits || 3}
-            onChange={(e) => setForm({ ...form, credits: Number(e.target.value) })}
-            required
-          />
-          <select
-            className="select"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value as any })}
-          >
-            <option>Core</option>
-            <option>Elective</option>
-            <option>Major</option>
-            <option>Minor</option>
-            <option>Lab</option>
-            <option>GED</option>
-          </select>
-          <div className="flex flex-wrap gap-2 md:col-span-2">
+      <div className="space-y-4">
+        <h2 className="text-sm font-semibold text-stone-700">Add course</h2>
+        <form onSubmit={save} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-6">
+            <input
+              className="input font-mono uppercase sm:col-span-1"
+              placeholder="Code"
+              value={form.code || ''}
+              onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+              required
+            />
+            <input
+              className="input sm:col-span-3"
+              placeholder="Title"
+              value={form.title || ''}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              required
+            />
+            <input
+              type="number"
+              className="input font-mono sm:col-span-1"
+              placeholder="Credits"
+              value={form.credits || 3}
+              onChange={(e) => setForm({ ...form, credits: Number(e.target.value) })}
+              required
+            />
+            <select
+              className="select sm:col-span-1"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value as any })}
+            >
+              <option>Core</option>
+              <option>Elective</option>
+              <option>Major</option>
+              <option>Minor</option>
+              <option>Lab</option>
+              <option>GED</option>
+            </select>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="label">Departments:</span>
             {departments.map((d) => (
-              <Button
+              <DeptPill
                 key={d._id}
-                type="button"
-                size="sm"
-                variant={form.departments?.includes(d._id) ? 'primary' : 'outline'}
-                onClick={() => toggleDepartment(d._id)}
-              >
-                {d.code}
-              </Button>
+                deptId={d._id}
+                code={d.code}
+                selected={!!(form.departments as string[])?.includes(d._id)}
+                onToggle={toggleDepartment}
+              />
             ))}
           </div>
-          <div className="flex flex-wrap items-center gap-2 md:col-span-4">
+
+          <div className="flex flex-wrap items-center gap-4">
             <Switch
               checked={!!form.countsTowardsCGPA}
               onChange={(next) => setForm({ ...form, countsTowardsCGPA: next })}
@@ -144,85 +174,105 @@ export default function AdminCourses() {
               label="Active"
             />
           </div>
-          <Button type="submit" className="md:col-span-6">
+
+          <Button type="submit" size="sm">
             Save course
           </Button>
         </form>
-      </Card>
+      </div>
 
-      <Card className="space-y-4">
+      <hr className="border-stone-200" />
+
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-800">Course list</h2>
-          <div className="relative w-full sm:w-64">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <h2 className="text-sm font-semibold text-stone-700">
+            All courses
+            <span className="ml-2 font-normal text-stone-400">({filtered.length})</span>
+          </h2>
+          <div className="relative w-full sm:w-56">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
             <input
-              className="input pl-9"
+              className="input pl-9 text-xs"
               placeholder="Search courses"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
         </div>
-        <div className="divide-y divide-slate-100">
+
+        <div className="divide-y divide-stone-100 border-y border-stone-200">
           {filtered.map((c) => (
-            <div key={c._id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-              <div className="space-y-2">
+            <div
+              key={c._id}
+              className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm"
+            >
+              <div className="min-w-0 space-y-2">
                 {editing?._id === c._id ? (
                   <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid gap-2 sm:grid-cols-4">
                       <input
-                        className="input w-24 uppercase"
+                        className="input font-mono uppercase"
                         value={editing.code || ''}
                         onChange={(e) =>
-                          setEditing({ ...editing, code: e.target.value.toUpperCase() })
+                          setEditing({
+                            ...editing,
+                            code: e.target.value.toUpperCase(),
+                          })
                         }
                       />
                       <input
-                        className="input"
+                        className="input sm:col-span-2"
                         value={editing.title || ''}
                         onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                       />
                       <input
                         type="number"
-                        className="input w-20"
+                        className="input font-mono"
                         value={editing.credits || 0}
-                        onChange={(e) => setEditing({ ...editing, credits: Number(e.target.value) })}
+                        onChange={(e) =>
+                          setEditing({
+                            ...editing,
+                            credits: Number(e.target.value),
+                          })
+                        }
                       />
-                      <select
-                        className="select w-28"
-                        value={editing.category}
-                        onChange={(e) => setEditing({ ...editing, category: e.target.value as any })}
-                      >
-                        <option>Core</option>
-                        <option>Elective</option>
-                        <option>Major</option>
-                        <option>Minor</option>
-                        <option>Lab</option>
-                        <option>GED</option>
-                      </select>
                     </div>
+                    <select
+                      className="select w-32"
+                      value={editing.category}
+                      onChange={(e) => setEditing({ ...editing, category: e.target.value as any })}
+                    >
+                      <option>Core</option>
+                      <option>Elective</option>
+                      <option>Major</option>
+                      <option>Minor</option>
+                      <option>Lab</option>
+                      <option>GED</option>
+                    </select>
                     <div className="flex flex-wrap gap-2">
                       {departments.map((d) => (
-                        <Button
+                        <DeptPill
                           key={d._id}
-                          type="button"
-                          size="sm"
-                          variant={editing.departments?.includes(d._id) ? 'primary' : 'outline'}
-                          onClick={() => toggleDepartmentForEditing(d._id)}
-                        >
-                          {d.code}
-                        </Button>
+                          deptId={d._id}
+                          code={d.code}
+                          selected={!!(editing.departments as string[])?.includes(d._id)}
+                          onToggle={toggleDepartmentForEditing}
+                        />
                       ))}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-4">
                       <Switch
                         checked={!!editing.countsTowardsCGPA}
-                        onChange={(next) => setEditing({ ...editing, countsTowardsCGPA: next })}
+                        onChange={(next) =>
+                          setEditing({ ...editing, countsTowardsCGPA: next })
+                        }
                         label="Counts CGPA"
                       />
                       <Switch
                         checked={!!editing.countsTowardsCredits}
-                        onChange={(next) => setEditing({ ...editing, countsTowardsCredits: next })}
+                        onChange={(next) =>
+                          setEditing({ ...editing, countsTowardsCredits: next })
+                        }
                         label="Counts credits"
                       />
                       <Switch
@@ -234,17 +284,24 @@ export default function AdminCourses() {
                   </div>
                 ) : (
                   <>
-                    <p className="font-semibold text-slate-800">
-                      {c.code} — {c.title}
+                    <p className="font-semibold text-stone-800">
+                      <span className="font-mono">{c.code}</span>
+                      <span className="mx-2 text-stone-300">—</span>
+                      {c.title}
                     </p>
-                    <p className="text-slate-600">
-                      {c.credits} credits • {c.category} • Depts: {c.departments.length} •{' '}
-                      {c.active ? 'Active' : 'Inactive'}
+                    <p className="text-xs text-stone-500">
+                      {c.credits} cr · {c.category} · {c.departments.length} dept
+                      {c.departments.length !== 1 ? 's' : ''} ·{' '}
+                      {c.active ? (
+                        <span className="text-success-700">Active</span>
+                      ) : (
+                        <span className="text-stone-400">Inactive</span>
+                      )}
                     </p>
                   </>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex shrink-0 gap-2">
                 {editing?._id === c._id ? (
                   <>
                     <Button
@@ -253,7 +310,7 @@ export default function AdminCourses() {
                         if (!editing) return;
                         await api.admin.courses.update(c._id, editing);
                         setEditing(null);
-                        load();
+                        await load();
                       }}
                     >
                       Save
@@ -272,7 +329,7 @@ export default function AdminCourses() {
                       variant="danger"
                       onClick={async () => {
                         await api.admin.courses.remove(c._id);
-                        load();
+                        await load();
                       }}
                     >
                       Delete
@@ -282,9 +339,13 @@ export default function AdminCourses() {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && <p className="py-3 text-sm text-slate-600">No courses yet.</p>}
+          {filtered.length === 0 && (
+            <p className="py-4 text-sm text-stone-400">
+              {query ? 'No courses match your search.' : 'No courses yet.'}
+            </p>
+          )}
         </div>
-      </Card>
+      </div>
     </AdminShell>
   );
 }

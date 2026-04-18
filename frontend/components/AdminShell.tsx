@@ -11,7 +11,8 @@ import {
   Scale,
   Users,
   FileStack,
-  Settings
+  Settings,
+  LogOut,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { cn } from '../lib/cn';
@@ -29,7 +30,7 @@ const navItems = [
   { href: '/admin/grade-scale', label: 'Grade scale', icon: Scale },
   { href: '/admin/students', label: 'Students', icon: Users },
   { href: '/admin/templates', label: 'Templates', icon: FileStack },
-  { href: '/admin/settings', label: 'Settings', icon: Settings }
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ] as const satisfies readonly NavItem[];
 
 interface Props {
@@ -41,59 +42,77 @@ interface Props {
 
 export default function AdminShell({ title, subtitle, actions, children }: Props) {
   const pathname = usePathname();
+  const isActive = (href: Route) =>
+    href === '/admin'
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-      <aside className="hidden h-fit rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-soft backdrop-blur lg:sticky lg:top-24 lg:block">
-        <div className="space-y-1">
-          <p className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Admin</p>
-          {navItems.map((item) => {
-            const active = pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold transition',
-                  active
-                    ? 'bg-primary/10 text-primary-700'
-                    : 'text-slate-600 hover:bg-slate-100'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-          <button
-            onClick={() => api.logout().catch(() => undefined)}
-            className="mt-4 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-          >
-            Logout
-          </button>
+    <div className="grid lg:grid-cols-[200px_1fr]">
+      <aside className="hidden border-r border-stone-200 bg-white lg:sticky lg:top-14 lg:block lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto">
+        <div className="flex h-full flex-col">
+          <nav className="flex-1 px-2 py-4">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-stone-400">
+              Admin
+            </p>
+            <div className="space-y-0.5">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-2.5 border-l-2 px-3 py-2 text-sm transition-colors duration-150',
+                      active
+                        ? 'border-primary-700 bg-stone-50 font-semibold text-stone-900'
+                        : 'border-transparent text-stone-500 hover:bg-stone-50 hover:text-stone-900'
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+
+          <div className="border-t border-stone-200 px-2 py-3">
+            <button
+              type="button"
+              onClick={() => api.logout().catch(() => undefined)}
+              className="flex w-full items-center gap-2.5 border-l-2 border-transparent px-3 py-2 text-sm text-stone-400 transition-colors duration-150 hover:border-danger hover:bg-danger/5 hover:text-danger-700"
+            >
+              <LogOut className="h-3.5 w-3.5 shrink-0" />
+              Log out
+            </button>
+          </div>
         </div>
       </aside>
 
-      <div className="space-y-6">
-        <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-soft backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-stone-200 bg-white px-6 py-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
-            {subtitle && <p className="text-sm text-slate-600">{subtitle}</p>}
+            <h1 className="text-base font-semibold text-stone-900">{title}</h1>
+            {subtitle && <p className="mt-0.5 text-sm text-stone-500">{subtitle}</p>}
           </div>
-          {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
-        <div className="lg:hidden">
-          <div className="flex flex-wrap gap-2">
+
+        <div className="border-b border-stone-200 bg-white px-4 py-2 lg:hidden">
+          <div className="flex items-center gap-0.5 overflow-x-auto">
             {navItems.map((item) => {
-              const active = pathname === item.href;
+              const active = isActive(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'rounded-2xl px-4 py-2 text-xs font-semibold',
-                    active ? 'bg-primary/10 text-primary-700' : 'bg-white text-slate-600'
+                    'shrink-0 px-3 py-1.5 text-xs font-semibold transition-colors',
+                    active
+                      ? 'text-stone-900 underline decoration-primary-700 decoration-2 underline-offset-4'
+                      : 'text-stone-500 hover:text-stone-900'
                   )}
                 >
                   {item.label}
@@ -101,14 +120,16 @@ export default function AdminShell({ title, subtitle, actions, children }: Props
               );
             })}
             <button
+              type="button"
               onClick={() => api.logout().catch(() => undefined)}
-              className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600"
+              className="ml-auto shrink-0 px-3 py-1.5 text-xs text-stone-400 hover:text-danger-700"
             >
-              Logout
+              Log out
             </button>
           </div>
         </div>
-        {children}
+
+        <div className="space-y-8 p-6">{children}</div>
       </div>
     </div>
   );
