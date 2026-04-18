@@ -1,67 +1,61 @@
-import type { ReactNode } from 'react';
-import { useEffect } from 'react';
-import { cn } from '../../lib/cn';
+'use client';
 
-type Size = 'sm' | 'md' | 'lg';
+import { useEffect, useId, type ReactNode } from 'react';
+import { X } from 'lucide-react';
+import { cn } from '../../lib/cn';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   title?: string;
-  description?: string;
-  size?: Size;
   children: ReactNode;
+  className?: string;
 }
 
-const sizeStyles: Record<Size, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-2xl'
-};
+export default function Modal({ open, onClose, title, children, className }: Props) {
+  const titleId = useId();
 
-export default function Modal({
-  open,
-  onClose,
-  title,
-  description,
-  size = 'md',
-  children
-}: Props) {
   useEffect(() => {
     if (!open) return;
-    const handle = (event: KeyboardEvent) => {
+
+    const handler = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
-    window.addEventListener('keydown', handle);
-    return () => window.removeEventListener('keydown', handle);
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-label="Close modal"
-      />
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-stone-900/50" onClick={onClose} aria-hidden="true" />
       <div
         className={cn(
-          'relative w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-card',
-          sizeStyles[size]
+          'relative z-10 mx-4 w-full max-w-lg rounded-md border border-stone-200 bg-white shadow-lg',
+          className
         )}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
+        aria-labelledby={title ? titleId : undefined}
       >
         {title && (
-          <h3 id="modal-title" className="text-lg font-semibold text-slate-900">
-            {title}
-          </h3>
+          <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
+            <h3 id={titleId} className="font-sans text-base font-semibold text-stone-900">
+              {title}
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-sm p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+              aria-label="Close modal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         )}
-        {description && <p className="mt-2 text-sm text-slate-600">{description}</p>}
-        <div className="mt-5">{children}</div>
+        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   );

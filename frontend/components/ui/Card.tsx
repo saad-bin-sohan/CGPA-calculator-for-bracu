@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 
-type Variant = 'default' | 'strong' | 'subtle' | 'glass';
+type Variant = 'default' | 'sm' | 'flush';
 
 interface Props {
   className?: string;
@@ -10,10 +10,9 @@ interface Props {
 }
 
 const variantStyles: Record<Variant, string> = {
-  default: 'card',
-  strong: 'card-strong',
-  subtle: 'card-subtle',
-  glass: 'glass-panel'
+  default: 'surface',
+  sm: 'surface-sm',
+  flush: 'rounded-md border border-stone-200 bg-white'
 };
 
 export default function Card({ className, children, variant = 'default' }: Props) {

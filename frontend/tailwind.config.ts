@@ -15,30 +15,30 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          DEFAULT: '#2563eb'
+          50: '#EFF7F2',
+          100: '#D5EDDB',
+          200: '#AADAB5',
+          300: '#74C18D',
+          400: '#3EA368',
+          500: '#1D8A50',
+          600: '#1A7545',
+          700: '#155E38',
+          800: '#0F4829',
+          900: '#0A3A1C',
+          DEFAULT: '#155E38'
         },
-        accent: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
-          DEFAULT: '#06b6d4'
+        stone: {
+          50: '#FAFAF9',
+          100: '#F5F5F4',
+          200: '#E7E5E4',
+          300: '#D6D3D1',
+          400: '#A8A29E',
+          500: '#78716C',
+          600: '#57534E',
+          700: '#44403C',
+          800: '#292524',
+          900: '#1C1917',
+          DEFAULT: '#78716C'
         },
         success: {
           50: '#ecfdf3',
@@ -94,35 +94,27 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+        sans: ["'Inter'", 'system-ui', '-apple-system', 'sans-serif'],
+        display: ["'Instrument Serif'", 'Georgia', "'Times New Roman'", 'serif'],
+        mono: ["'IBM Plex Mono'", 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
       },
       borderRadius: {
-        '4xl': '2rem',
-        '5xl': '2.5rem'
+        sm: '4px',
+        DEFAULT: '6px',
+        md: '8px',
+        lg: '12px'
       },
       boxShadow: {
-        soft: '0 20px 45px -30px rgba(15, 23, 42, 0.5)',
-        card: '0 24px 60px -36px rgba(15, 23, 42, 0.55)',
-        glow: '0 0 0 1px rgba(148, 163, 184, 0.25), 0 18px 40px -24px rgba(37, 99, 235, 0.5)'
-      },
-      backgroundImage: {
-        'mesh-primary':
-          'radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.18), transparent 45%), radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.18), transparent 40%), radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.14), transparent 40%)'
+        xs: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        sm: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+        md: '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06)',
+        lg: '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05)',
+        none: 'none'
       },
       keyframes: {
         'fade-up': {
           '0%': { opacity: '0', transform: 'translateY(14px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' }
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-6px)' }
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' }
         },
         'accordion-down': {
           from: { height: '0' },
@@ -134,9 +126,7 @@ const config: Config = {
         }
       },
       animation: {
-        'fade-up': 'fade-up 0.6s ease both',
-        float: 'float 6s ease-in-out infinite',
-        shimmer: 'shimmer 1.6s linear infinite'
+        'fade-up': 'fade-up 0.6s ease both'
       }
     }
   },

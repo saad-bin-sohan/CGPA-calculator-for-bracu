@@ -5,18 +5,18 @@ type Variant = 'default' | 'primary' | 'success' | 'warning' | 'danger';
 
 interface Props {
   children: ReactNode;
-  className?: string;
   variant?: Variant;
+  className?: string;
 }
 
-const variants: Record<Variant, string> = {
+const variantStyles: Record<Variant, string> = {
   default: 'badge',
-  primary: 'badge badge-primary',
-  success: 'badge badge-success',
-  warning: 'badge badge-warning',
-  danger: 'badge badge-danger'
+  primary: 'badge',
+  success: 'badge-success',
+  warning: 'badge-warning',
+  danger: 'badge-danger'
 };
 
-export default function Badge({ children, className, variant = 'default' }: Props) {
-  return <span className={cn(variants[variant], className)}>{children}</span>;
+export default function Badge({ children, variant = 'default', className }: Props) {
+  return <span className={cn(variantStyles[variant], className)}>{children}</span>;
 }

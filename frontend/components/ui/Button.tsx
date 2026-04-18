@@ -10,18 +10,18 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-const sizeStyles: Record<Size, string> = {
-  sm: 'px-3 py-2 text-xs rounded-xl',
-  md: 'px-4 py-2.5 text-sm rounded-2xl',
-  lg: 'px-5 py-3 text-base rounded-2xl'
+const variantStyles: Record<Variant, string> = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  outline: 'btn-outline',
+  ghost: 'btn-ghost',
+  danger: 'btn-danger'
 };
 
-const variantStyles: Record<Variant, string> = {
-  primary: 'btn btn-primary',
-  secondary: 'btn btn-secondary',
-  outline: 'btn btn-outline',
-  ghost: 'btn btn-ghost',
-  danger: 'btn btn-danger'
+const sizeStyles: Record<Size, string> = {
+  sm: 'px-3 py-1.5 text-xs',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-5 py-2.5 text-base'
 };
 
 export default function Button({
@@ -37,11 +37,18 @@ export default function Button({
   return (
     <button
       type={type}
-      className={cn(variantStyles[variant], sizeStyles[size], className)}
+      className={cn('btn', variantStyles[variant], sizeStyles[size], className)}
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? 'Loading…' : children}
+      {loading ? (
+        <span className="flex items-center gap-2">
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          Loading
+        </span>
+      ) : (
+        children
+      )}
     </button>
   );
 }

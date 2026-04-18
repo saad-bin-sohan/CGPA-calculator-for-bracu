@@ -1,35 +1,34 @@
-import Modal from './Modal';
 import Button from './Button';
+import Modal from './Modal';
 
 interface Props {
   open: boolean;
-  title: string;
-  description: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  onConfirm: () => void;
   onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
   danger?: boolean;
 }
 
 export default function ConfirmDialog({
   open,
+  onClose,
+  onConfirm,
   title,
   description,
   confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  onConfirm,
-  onClose,
   danger
 }: Props) {
   return (
-    <Modal open={open} onClose={onClose} title={title} description={description} size="sm">
-      <div className="flex flex-wrap gap-3">
-        <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm} className="flex-1">
-          {confirmLabel}
+    <Modal open={open} onClose={onClose} title={title}>
+      {description && <p className="mb-5 text-sm text-stone-600">{description}</p>}
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={onClose}>
+          Cancel
         </Button>
-        <Button variant="outline" onClick={onClose} className="flex-1">
-          {cancelLabel}
+        <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>
+          {confirmLabel}
         </Button>
       </div>
     </Modal>

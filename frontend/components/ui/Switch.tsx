@@ -1,39 +1,34 @@
-import { cn } from '../../lib/cn';
-
 interface Props {
   checked: boolean;
   onChange: (next: boolean) => void;
-  label: string;
-  className?: string;
+  label?: string;
+  id?: string;
 }
 
-export default function Switch({ checked, onChange, label, className }: Props) {
+export default function Switch({ checked, onChange, label, id }: Props) {
+  const switchId = id || `switch-${label?.replace(/\s+/g, '-').toLowerCase()}`;
+
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-        checked ? 'border-primary/40 bg-primary/10 text-primary-700' : 'border-slate-200 text-slate-600',
-        className
-      )}
-    >
-      <span
-        className={cn(
-          'relative h-4 w-7 rounded-full transition',
-          checked ? 'bg-primary' : 'bg-slate-300'
-        )}
+    <label htmlFor={switchId} className="inline-flex cursor-pointer items-center gap-2">
+      <button
+        id={switchId}
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={[
+          'relative h-5 w-9 rounded-full border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-700 focus-visible:ring-offset-2',
+          checked ? 'border-primary-700 bg-primary-700' : 'border-stone-300 bg-stone-100'
+        ].join(' ')}
       >
         <span
-          className={cn(
-            'absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white shadow transition',
-            checked ? 'translate-x-3' : 'translate-x-0'
-          )}
+          className={[
+            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+            checked ? 'left-4' : 'left-0.5'
+          ].join(' ')}
         />
-      </span>
-      {label}
-    </button>
+      </button>
+      {label && <span className="select-none text-xs font-medium text-stone-600">{label}</span>}
+    </label>
   );
 }
