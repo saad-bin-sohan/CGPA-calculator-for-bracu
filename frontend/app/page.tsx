@@ -138,21 +138,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-
-      <footer className="mt-16 flex flex-col gap-4 border-t border-stone-200 py-8 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between">
-        <span>BRACU CGPA Planner · For students, by design.</span>
-        <div className="flex gap-6">
-          <Link href="/calculator" className="text-stone-500 transition-colors hover:text-stone-900">
-            Calculator
-          </Link>
-          <Link href="/dashboard" className="text-stone-500 transition-colors hover:text-stone-900">
-            Dashboard
-          </Link>
-          <Link href="/admin/login" className="text-stone-500 transition-colors hover:text-stone-900">
-            Admin
-          </Link>
-        </div>
-      </footer>
     </>
   );
 }

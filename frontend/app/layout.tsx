@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import Footer from '../components/Footer';
 import NavBar from '../components/NavBar';
 
 export const metadata: Metadata = {
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-stone-50 text-stone-900 antialiased">
         <NavBar />
         <main className="container py-12 sm:py-16">{children}</main>
+        <Footer />
       </body>
     </html>
   );
