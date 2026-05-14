@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
@@ -46,32 +47,49 @@ export default function Home() {
   return (
     <>
       <section className="py-16 lg:py-24">
-        <div className="max-w-2xl">
-          <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-stone-500">
-            Academic Planning Suite · BRAC University
-          </p>
-          <h1 className="font-display text-4xl font-normal leading-tight text-stone-900 lg:text-5xl">
-            The CGPA calculator built for confident academic planning.
-          </h1>
-          <p className="mt-6 text-lg leading-relaxed text-stone-600">
-            Plan semesters, handle retakes, and track your graduation progress with precision tools
-            designed specifically for BRACU students.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-5">
-            <Link href="/calculator" className="btn-primary">
-              Open calculator
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-700 transition-colors hover:text-primary-700"
-            >
-              Create account
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <p className="mt-4 text-xs text-stone-400">No sign-in required for guest mode.</p>
-        </div>
-      </section>
+  <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+
+    {/* ── LEFT COLUMN: all existing text content ── */}
+    <div>
+      <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-stone-500">
+        Academic Planning Suite · BRAC University
+      </p>
+      <h1 className="font-display text-4xl font-normal leading-tight text-stone-900 lg:text-5xl">
+        The CGPA calculator built for confident academic planning.
+      </h1>
+      <p className="mt-6 text-lg leading-relaxed text-stone-600">
+        Plan semesters, handle retakes, and track your graduation progress with precision tools
+        designed specifically for BRACU students.
+      </p>
+      <div className="mt-8 flex flex-wrap items-center gap-5">
+        <Link href="/calculator" className="btn-primary">
+          Open calculator
+        </Link>
+        <Link
+          href="/signup"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-stone-700 transition-colors hover:text-primary-700"
+        >
+          Create account
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      <p className="mt-4 text-xs text-stone-400">No sign-in required for guest mode.</p>
+    </div>
+
+    {/* ── RIGHT COLUMN: hero image ── */}
+    <div className="relative aspect-[3/2] w-full overflow-hidden rounded-lg">
+      <Image
+        src="/hero.png"
+        alt="A student planning her semester with BRACU CGPA tracker"
+        fill
+        className="object-cover"
+        priority
+        sizes="(max-width: 1023px) 100vw, 50vw"
+      />
+    </div>
+
+  </div>
+</section>
       <hr className="mt-16 border-stone-200" />
 
       <section className="py-16">
