@@ -48,20 +48,34 @@ export const computeCGPA = (
     ...computeSemesterGPA(s, precision)
   }));
 
+  // Retakes are deduped by course code so only the latest attempt counts.
+  // Enrollments with no course code yet (a new/blank row) have nothing to
+  // dedupe against - grouping them under the shared key '' would silently
+  // merge unrelated, not-yet-labeled courses into a single phantom entry.
+  // Those are counted individually instead, exactly as the per-semester
+  // totals above already do.
   const latestAttemptByCourse = new Map<string, EnrollmentForCalc>();
+  const uncodedEnrollments: EnrollmentForCalc[] = [];
   semesters.forEach((sem) => {
     sem.enrollments.forEach((enrollment) => {
       if (!enrollment.countsTowardsCGPA && !enrollment.countsTowardsCredits) return;
-      const existing = latestAttemptByCourse.get(enrollment.courseCode);
+      const code = enrollment.courseCode.trim();
+      if (!code) {
+        uncodedEnrollments.push(enrollment);
+        return;
+      }
+      const existing = latestAttemptByCourse.get(code);
       if (!existing || existing.createdAt < enrollment.createdAt) {
-        latestAttemptByCourse.set(enrollment.courseCode, enrollment);
+        latestAttemptByCourse.set(code, enrollment);
       }
     });
   });
 
+  const countedEnrollments = [...latestAttemptByCourse.values(), ...uncodedEnrollments];
+
   let totalPoints = 0;
   let totalCredits = 0;
-  latestAttemptByCourse.forEach((enrollment) => {
+  countedEnrollments.forEach((enrollment) => {
     if (enrollment.countsTowardsCGPA) {
       totalPoints += enrollment.gradePoint * enrollment.credits;
     }
@@ -74,7 +88,7 @@ export const computeCGPA = (
   return {
     cgpa,
     totalCredits,
-    totalCourses: latestAttemptByCourse.size,
+    totalCourses: countedEnrollments.length,
     perSemester
   };
 };
