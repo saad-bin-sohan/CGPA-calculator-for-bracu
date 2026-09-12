@@ -3,16 +3,10 @@ import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { env } from '../config/env.js';
 import { User } from '../models/User.js';
+import { AUTH_COOKIE_NAME, buildAuthCookieOptions } from '../utils/cookies.js';
 import { signToken } from '../utils/jwt.js';
 
 const googleClient = env.googleClientId ? new OAuth2Client(env.googleClientId) : null;
-
-const cookieOptions = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: false,
-  maxAge: 7 * 24 * 60 * 60 * 1000
-};
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password, department } = req.body;
@@ -31,7 +25,7 @@ export const register = async (req: Request, res: Response) => {
   });
   const token = signToken({ userId: user.id, role: 'student' });
   res
-    .cookie('token', token, { ...cookieOptions, secure: env.clientOrigin.startsWith('https') })
+    .cookie(AUTH_COOKIE_NAME, token, buildAuthCookieOptions(req.secure))
     .json({ user: sanitizeUser(user), token });
 };
 
@@ -47,7 +41,7 @@ export const login = async (req: Request, res: Response) => {
   }
   const token = signToken({ userId: user.id, role: 'student' });
   res
-    .cookie('token', token, { ...cookieOptions, secure: env.clientOrigin.startsWith('https') })
+    .cookie(AUTH_COOKIE_NAME, token, buildAuthCookieOptions(req.secure))
     .json({ user: sanitizeUser(user), token });
 };
 
@@ -77,7 +71,7 @@ export const googleLogin = async (req: Request, res: Response) => {
   }
   const token = signToken({ userId: user.id, role: 'student' });
   res
-    .cookie('token', token, { ...cookieOptions, secure: env.clientOrigin.startsWith('https') })
+    .cookie(AUTH_COOKIE_NAME, token, buildAuthCookieOptions(req.secure))
     .json({ user: sanitizeUser(user), token });
 };
 
@@ -100,9 +94,9 @@ export const updateProfile = async (req: Request, res: Response) => {
   res.json({ user: sanitizeUser(user) });
 };
 
-export const logout = async (_req: Request, res: Response) => {
+export const logout = async (req: Request, res: Response) => {
   res
-    .clearCookie('token', { ...cookieOptions, secure: env.clientOrigin.startsWith('https') })
+    .clearCookie(AUTH_COOKIE_NAME, buildAuthCookieOptions(req.secure))
     .json({ message: 'Logged out' });
 };
 

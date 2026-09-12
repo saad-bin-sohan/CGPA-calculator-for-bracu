@@ -16,9 +16,27 @@ import templateRoutes from './routes/templateRoutes.js';
 import { seedDefaults } from './utils/seed.js';
 
 const app = express();
+
+// Render (and most PaaS hosts) terminate TLS at a proxy in front of this
+// process and forward plain HTTP internally. Without this, req.secure is
+// always false, which would make the auth cookie logic below think every
+// request is insecure even in production. This makes req.secure reflect the
+// original client connection via the X-Forwarded-Proto header.
+app.set('trust proxy', 1);
+
 app.use(
   cors({
-    origin: env.clientOrigin,
+    origin(requestOrigin, callback) {
+      // Requests with no Origin header (server-to-server calls, curl,
+      // health checks) aren't subject to CORS - let them through.
+      if (!requestOrigin) return callback(null, true);
+      const normalized = requestOrigin.replace(/\/+$/, '');
+      if (env.clientOrigins.includes(normalized)) {
+        return callback(null, true);
+      }
+      console.warn(`Blocked CORS request from unrecognized origin: ${requestOrigin}`);
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
   })
 );
