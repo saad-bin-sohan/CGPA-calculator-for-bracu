@@ -35,9 +35,10 @@ export default function CalculatorPage() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('');
   const [gradeScale, setGradeScale] = useState<GradeScaleEntry[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [precision, setPrecision] = useState<number>(10);
+  const [precision, setPrecision] = useState<number>(2);
   const [templates, setTemplates] = useState<SemesterTemplate[]>([]);
   const [status, setStatus] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [semesters, setSemesters] = useState<Semester[]>([
     {
       termName: 'Spring 2025',
@@ -46,11 +47,42 @@ export default function CalculatorPage() {
   ]);
 
   useEffect(() => {
-    api.getDepartments().then((d) => setDepartments(d.departments || []));
-    api.getGradeScale().then((g) => setGradeScale(g.entries || []));
-    api.getSettings().then((s) => setPrecision(s.settings?.cgpaPrecision || 10));
-    const saved =
-      typeof window !== 'undefined' ? localStorage.getItem('guest-plan') : null;
+    let cancelled = false;
+
+    // Promise.allSettled (rather than three independent, uncaught .then()
+    // calls) means one failing request can't silently prevent the others
+    // from populating, and lets us surface a single, honest notice instead
+    // of leaving the page blank with no explanation.
+    Promise.allSettled([api.getDepartments(), api.getGradeScale(), api.getSettings()]).then(
+      ([deptResult, gradeResult, settingsResult]) => {
+        if (cancelled) return;
+        if (deptResult.status === 'fulfilled') {
+          setDepartments(deptResult.value.departments || []);
+        } else {
+          console.error('Failed to load departments', deptResult.reason);
+        }
+        if (gradeResult.status === 'fulfilled') {
+          setGradeScale(gradeResult.value.entries || []);
+        } else {
+          console.error('Failed to load grade scale', gradeResult.reason);
+        }
+        if (settingsResult.status === 'fulfilled') {
+          setPrecision(settingsResult.value.settings?.cgpaPrecision || 2);
+        } else {
+          console.error('Failed to load settings', settingsResult.reason);
+        }
+        const anyFailed = [deptResult, gradeResult, settingsResult].some(
+          (r) => r.status === 'rejected'
+        );
+        setLoadError(
+          anyFailed
+            ? "Couldn't reach the server for some reference data (departments, grade scale, or settings). You can still enter courses by hand - department selection and templates may be unavailable until this loads. Try refreshing in a moment."
+            : null
+        );
+      }
+    );
+
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('guest-plan') : null;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -60,6 +92,10 @@ export default function CalculatorPage() {
         // ignore
       }
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -72,20 +108,27 @@ export default function CalculatorPage() {
       setTemplates([]);
       return;
     }
-    api.getTemplates(selectedDepartment).then((t) => {
-      setTemplates(t.templates || []);
-      if ((semesters?.length || 0) === 0 || semesters.every((s) => s.enrollments.length === 0)) {
-        applyTemplate(t.templates || []);
-      }
-    });
+    api
+      .getTemplates(selectedDepartment)
+      .then((t) => {
+        setTemplates(t.templates || []);
+        if ((semesters?.length || 0) === 0 || semesters.every((s) => s.enrollments.length === 0)) {
+          applyTemplate(t.templates || []);
+        }
+      })
+      .catch((err) => console.error('Failed to load templates', err));
   }, [selectedDepartment]);
 
   const summary = useMemo(
     () => computeSummary(semesters, precision),
     [semesters, precision]
   );
-  const requiredCredits =
-    departments.find((d) => d._id === selectedDepartment)?.totalCreditsRequired || 136;
+  // No fallback number here on purpose - a fabricated "required credits"
+  // value (the old code defaulted to 136, CSE's number) would render even
+  // when no department was selected or matched, which is misleading rather
+  // than helpful. undefined means "we don't know yet", and every place this
+  // is used below is expected to handle that explicitly.
+  const requiredCredits = departments.find((d) => d._id === selectedDepartment)?.totalCreditsRequired;
   const selectedDept = useMemo(
     () => departments.find((d) => d._id === selectedDepartment),
     [departments, selectedDepartment]
@@ -113,8 +156,12 @@ export default function CalculatorPage() {
 
   const searchCourses = async (query: string) => {
     if (query.length < 2) return;
-    const res = await api.getCourses(query, selectedDepartment);
-    setCourses(res.courses || []);
+    try {
+      const res = await api.getCourses(query, selectedDepartment);
+      setCourses(res.courses || []);
+    } catch (err) {
+      console.error('Course search failed', err);
+    }
   };
 
   const applyTemplate = (tpls: SemesterTemplate[]) => {
@@ -167,6 +214,8 @@ export default function CalculatorPage() {
         </Button>
       </div>
 
+      {loadError && <p className="alert-danger">{loadError}</p>}
+
       <div className="space-y-3">
         <div className="max-w-xs">
           <label className="label mb-2 block">Department</label>
@@ -203,7 +252,7 @@ export default function CalculatorPage() {
         {status && <p className="text-sm font-semibold text-success-700">{status}</p>}
       </div>
 
-      <ProgressBar completed={summary.totalCredits} total={requiredCredits} />
+      <ProgressBar completed={summary.totalCredits} total={requiredCredits ?? null} />
 
       <hr className="border-stone-200" />
 
@@ -255,7 +304,11 @@ export default function CalculatorPage() {
             <SummaryCard
               title="Credits completed"
               value={`${summary.totalCredits}`}
-              sub={`of ${requiredCredits} required`}
+              sub={
+                requiredCredits
+                  ? `of ${requiredCredits} required`
+                  : 'Select a department to see your requirement'
+              }
               icon={<Layers className="h-4 w-4" />}
             />
             <SummaryCard

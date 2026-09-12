@@ -24,11 +24,18 @@ export default function AdminCourses() {
   });
   const [editing, setEditing] = useState<Partial<Course> | null>(null);
   const [query, setQuery] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
-    const [d, c] = await Promise.all([api.getDepartments(), api.getCourses('')]);
-    setDepartments(d.departments || []);
-    setCourses(c.courses || []);
+    try {
+      const [d, c] = await Promise.all([api.getDepartments(), api.getCourses('')]);
+      setDepartments(d.departments || []);
+      setCourses(c.courses || []);
+      setLoadError(null);
+    } catch (err: any) {
+      console.error('Failed to load courses/departments', err);
+      setLoadError(err.message || 'Failed to load courses. Try refreshing.');
+    }
   };
 
   useEffect(() => {
@@ -104,6 +111,8 @@ export default function AdminCourses() {
 
   return (
     <AdminShell title="Courses" subtitle="Create and manage the course catalog.">
+      {loadError && <p className="alert-danger">{loadError}</p>}
+
       <div className="space-y-4">
         <h2 className="text-sm font-semibold text-stone-700">Add course</h2>
         <form onSubmit={save} className="space-y-3">

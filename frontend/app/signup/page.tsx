@@ -14,6 +14,7 @@ export default function SignupPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', department: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deptLoadError, setDeptLoadError] = useState<string | null>(null);
 
   const strength = useMemo(() => {
     const value = form.password;
@@ -34,7 +35,13 @@ export default function SignupPage() {
   };
 
   useEffect(() => {
-    api.getDepartments().then((data) => setDepartments(data.departments || []));
+    api
+      .getDepartments()
+      .then((data) => setDepartments(data.departments || []))
+      .catch((err) => {
+        console.error('Failed to load departments', err);
+        setDeptLoadError("Couldn't load the department list - you can still sign up and set it later from your profile.");
+      });
   }, []);
 
   const submit = async (e: React.FormEvent) => {
@@ -158,6 +165,7 @@ export default function SignupPage() {
                 </option>
               ))}
             </select>
+            {deptLoadError && <p className="mt-1.5 text-xs text-danger-700">{deptLoadError}</p>}
           </div>
 
           {error && <p className="text-sm text-danger-700">{error}</p>}

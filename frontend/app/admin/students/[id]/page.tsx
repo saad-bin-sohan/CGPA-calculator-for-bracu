@@ -31,7 +31,8 @@ export default function AdminStudentProfile() {
 
   if (!id) return null;
 
-  const requiredCredits = (student?.department as any)?.totalCreditsRequired || 0;
+  // No fallback number here on purpose - see calculator/page.tsx for why.
+  const requiredCredits = (student?.department as any)?.totalCreditsRequired as number | undefined;
 
   return (
     <AdminShell
@@ -68,7 +69,7 @@ export default function AdminStudentProfile() {
             </div>
           </div>
 
-          {student?.department && requiredCredits > 0 && (
+          {student?.department && requiredCredits !== undefined && requiredCredits > 0 && (
             <ProgressBar completed={summary.totalCredits} total={requiredCredits} />
           )}
         </>

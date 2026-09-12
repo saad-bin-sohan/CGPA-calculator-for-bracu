@@ -18,20 +18,38 @@ export default function AdminTemplates() {
   });
   const [message, setMessage] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadTemplates = async (dept?: string) => {
-    const data = await api.getTemplates(dept);
-    setTemplates(data.templates || []);
+    try {
+      const data = await api.getTemplates(dept);
+      setTemplates(data.templates || []);
+    } catch (err: any) {
+      console.error('Failed to load templates', err);
+      setLoadError(err.message || 'Failed to load templates. Try refreshing.');
+    }
   };
 
   useEffect(() => {
-    api.getDepartments().then((d) => setDepartments(d.departments || []));
+    api
+      .getDepartments()
+      .then((d) => setDepartments(d.departments || []))
+      .catch((err) => {
+        console.error('Failed to load departments', err);
+        setLoadError(err.message || 'Failed to load departments. Try refreshing.');
+      });
   }, []);
 
   useEffect(() => {
     if (selectedDept) {
       loadTemplates(selectedDept);
-      api.listCourses(selectedDept).then((c) => setCourses(c.courses || []));
+      api
+        .listCourses(selectedDept)
+        .then((c) => setCourses(c.courses || []))
+        .catch((err) => {
+          console.error('Failed to load courses for department', err);
+          setLoadError(err.message || 'Failed to load courses for this department.');
+        });
     } else {
       setTemplates([]);
       setCourses([]);
@@ -88,6 +106,8 @@ export default function AdminTemplates() {
       title="Semester templates"
       subtitle="Predefine semester course sets per department to auto-populate student and guest plans."
     >
+      {loadError && <p className="alert-danger">{loadError}</p>}
+
       <div className="space-y-2">
         <label className="label">Select department to manage templates</label>
         <select

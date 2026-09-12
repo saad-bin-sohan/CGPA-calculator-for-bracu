@@ -8,7 +8,7 @@ export interface ISettings extends Document {
 
 const SettingsSchema = new Schema<ISettings>(
   {
-    cgpaPrecision: { type: Number, default: 10 },
+    cgpaPrecision: { type: Number, default: 2 },
     labCountsTowardsCGPA: { type: Boolean, default: false },
     labCountsTowardsCredits: { type: Boolean, default: true }
   },

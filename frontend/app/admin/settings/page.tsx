@@ -10,10 +10,17 @@ import { Settings } from '../../../types';
 export default function AdminSettings() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api.getSettings().then((data) => setSettings(data.settings));
+    api
+      .getSettings()
+      .then((data) => setSettings(data.settings))
+      .catch((err) => {
+        console.error('Failed to load settings', err);
+        setLoadError(err.message || 'Failed to load settings.');
+      });
   }, []);
 
   const save = async (e: React.FormEvent) => {
@@ -31,7 +38,11 @@ export default function AdminSettings() {
   if (!settings) {
     return (
       <AdminShell title="Settings" subtitle="Adjust CGPA rounding and lab counting rules.">
-        <p className="text-sm text-stone-400">Loading settings…</p>
+        {loadError ? (
+          <p className="alert-danger">{loadError}</p>
+        ) : (
+          <p className="text-sm text-stone-400">Loading settings…</p>
+        )}
       </AdminShell>
     );
   }

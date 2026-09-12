@@ -23,10 +23,17 @@ export default function GradeScalePage() {
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('minPercentage');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
-    const data = await api.getGradeScale();
-    setEntries(data.entries || []);
+    try {
+      const data = await api.getGradeScale();
+      setEntries(data.entries || []);
+      setLoadError(null);
+    } catch (err: any) {
+      console.error('Failed to load grade scale', err);
+      setLoadError(err.message || 'Failed to load the grade scale. Try refreshing.');
+    }
   };
 
   useEffect(() => {
@@ -92,6 +99,8 @@ export default function GradeScalePage() {
       title="Grade scale"
       subtitle="Configure letter grades, percentage bands, grade points, and special W/I entries."
     >
+      {loadError && <p className="alert-danger">{loadError}</p>}
+
       <div className="space-y-4">
         <h2 className="text-sm font-semibold text-stone-700">Add grade entry</h2>
         <form onSubmit={save} className="grid gap-3 sm:grid-cols-6">

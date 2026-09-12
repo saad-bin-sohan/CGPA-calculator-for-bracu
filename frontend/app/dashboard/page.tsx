@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { FileDown, Save, Sigma, Layers, TrendingUp, GraduationCap } from 'lucide-react';
 import SemesterAccordion from '../../components/SemesterAccordion';
 import ProgressBar from '../../components/ProgressBar';
@@ -35,63 +36,97 @@ export default function DashboardPage() {
   const [gradeScale, setGradeScale] = useState<GradeScaleEntry[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
-  const [precision, setPrecision] = useState<number>(10);
+  const [precision, setPrecision] = useState<number>(2);
   const [userDept, setUserDept] = useState<Department | null>(null);
   const [userName, setUserName] = useState<string>('Student');
   const [message, setMessage] = useState<string | null>(null);
+  // `error` means "you are not authenticated" specifically - it's the only
+  // case where telling someone to log in is actually true. `loadError` means
+  // "you *are* logged in, but some reference data failed to load", which
+  // used to be misreported as the same thing.
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<SemesterTemplate[]>([]);
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const load = async () => {
-      try {
-        const [deptRes, gradeRes, settingsRes, meRes, semRes] = await Promise.all([
+      const [deptResult, gradeResult, settingsResult, meResult, semResult] =
+        await Promise.allSettled([
           api.getDepartments(),
           api.getGradeScale(),
           api.getSettings(),
-          api.me().catch(() => null),
-          api.semesters.list().catch(() => ({ semesters: [], summary: null }))
+          api.me(),
+          api.semesters.list()
         ]);
+      if (cancelled) return;
 
-        setDepartments(deptRes.departments || []);
-        setGradeScale(gradeRes.entries || []);
-        setPrecision(settingsRes.settings?.cgpaPrecision || 10);
+      const meRes = meResult.status === 'fulfilled' ? meResult.value : null;
 
-        if (meRes?.name) setUserName(meRes.name);
+      if (!meRes) {
+        setError('Please log in to view your dashboard.');
+        return;
+      }
 
-        if (meRes?.department) {
-          setUserDept(meRes.department as Department);
-          api.getTemplates((meRes.department as Department)._id).then((t) => {
+      const semRes =
+        semResult.status === 'fulfilled' ? semResult.value : { semesters: [], summary: null };
+
+      if (deptResult.status === 'fulfilled') setDepartments(deptResult.value.departments || []);
+      else console.error('Failed to load departments', deptResult.reason);
+
+      if (gradeResult.status === 'fulfilled') setGradeScale(gradeResult.value.entries || []);
+      else console.error('Failed to load grade scale', gradeResult.reason);
+
+      if (settingsResult.status === 'fulfilled') {
+        setPrecision(settingsResult.value.settings?.cgpaPrecision || 2);
+      } else {
+        console.error('Failed to load settings', settingsResult.reason);
+      }
+
+      const anyContentFailed = [deptResult, gradeResult, settingsResult, semResult].some(
+        (r) => r.status === 'rejected'
+      );
+      setLoadError(
+        anyContentFailed
+          ? "Some of your data (departments, grade scale, settings, or saved semesters) couldn't be loaded. What's shown below may be incomplete - try refreshing in a moment."
+          : null
+      );
+
+      if (meRes.name) setUserName(meRes.name);
+
+      if (meRes.department) {
+        setUserDept(meRes.department as Department);
+        api
+          .getTemplates((meRes.department as Department)._id)
+          .then((t) => {
             setTemplates(t.templates || []);
             if ((semRes.semesters || []).length === 0 && (t.templates || []).length > 0) {
               applyTemplate(t.templates || [], meRes.department?._id);
             }
-          });
-        }
+          })
+          .catch((err) => console.error('Failed to load templates', err));
+      }
 
-        if ((semRes.semesters || []).length > 0) {
-          setSemesters(semRes.semesters || []);
-        } else {
-          setSemesters([
-            {
-              termName: 'Semester 1',
-              department: meRes?.department ? (meRes.department as Department)._id : undefined,
-              enrollments: Array.from({ length: 4 }, () => blankEnrollment())
-            }
-          ]);
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load dashboard. Please log in again.');
+      if ((semRes.semesters || []).length > 0) {
+        setSemesters(semRes.semesters || []);
+      } else {
+        setSemesters([
+          {
+            termName: 'Semester 1',
+            department: meRes.department ? (meRes.department as Department)._id : undefined,
+            enrollments: Array.from({ length: 4 }, () => blankEnrollment())
+          }
+        ]);
       }
     };
-    load();
-  }, []);
 
-  useEffect(() => {
-    if (!userDept) return;
-    api.getTemplates(userDept._id).then((t) => setTemplates(t.templates || []));
-  }, [userDept]);
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (userDept && templates.length > 0 && semesters.length === 0) {
@@ -103,7 +138,8 @@ export default function DashboardPage() {
     () => computeSummary(semesters, precision),
     [semesters, precision]
   );
-  const requiredCredits = userDept?.totalCreditsRequired || 136;
+  // No fallback number here on purpose - see calculator/page.tsx for why.
+  const requiredCredits = userDept?.totalCreditsRequired;
 
   const gpaValues = summary.perSemester.map((s) => s.gpa);
   const gpaMin = gpaValues.length ? Math.min(...gpaValues) : 0;
@@ -143,8 +179,12 @@ export default function DashboardPage() {
 
   const searchCourses = async (query: string) => {
     if (query.length < 2) return;
-    const res = await api.getCourses(query, userDept?._id);
-    setCourses(res.courses || []);
+    try {
+      const res = await api.getCourses(query, userDept?._id);
+      setCourses(res.courses || []);
+    } catch (err) {
+      console.error('Course search failed', err);
+    }
   };
 
   const saveSemester = async (sem: Semester) => {
@@ -192,6 +232,21 @@ export default function DashboardPage() {
     setStatus('Template applied to your plan.');
   };
 
+  if (error) {
+    return (
+      <div className="mx-auto max-w-md space-y-4 py-20 text-center">
+        <h1 className="font-display text-2xl font-normal text-stone-900">Dashboard</h1>
+        <p className="alert-danger">{error}</p>
+        <Link
+          href="/login"
+          className="btn btn-primary inline-block px-5 py-2.5 text-base"
+        >
+          Log in
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -222,7 +277,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {error && <p className="alert-danger">{error}</p>}
+      {loadError && <p className="alert-danger">{loadError}</p>}
       {message && <p className="text-sm font-semibold text-success-700">{message}</p>}
       {status && <p className="text-sm font-semibold text-success-700">{status}</p>}
 
@@ -239,7 +294,7 @@ export default function DashboardPage() {
           <SummaryCard
             title="Credits earned"
             value={`${summary.totalCredits}`}
-            sub={`Goal: ${requiredCredits}`}
+            sub={requiredCredits ? `Goal: ${requiredCredits}` : 'Set a department to see your goal'}
             icon={<Layers className="h-4 w-4" />}
           />
         </div>
@@ -277,7 +332,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <ProgressBar completed={summary.totalCredits} total={requiredCredits} />
+      <ProgressBar completed={summary.totalCredits} total={requiredCredits ?? null} />
 
       <hr className="border-stone-200" />
 
@@ -376,13 +431,21 @@ export default function DashboardPage() {
 
           <div>
             <p className="label mb-2">Graduation progress</p>
-            <p className="font-mono text-sm text-stone-900">
-              {summary.totalCredits}
-              <span className="text-stone-400"> / {requiredCredits} credits</span>
-            </p>
-            <p className="mt-0.5 text-xs text-stone-400">
-              {Math.max(0, requiredCredits - summary.totalCredits)} credits remaining
-            </p>
+            {requiredCredits ? (
+              <>
+                <p className="font-mono text-sm text-stone-900">
+                  {summary.totalCredits}
+                  <span className="text-stone-400"> / {requiredCredits} credits</span>
+                </p>
+                <p className="mt-0.5 text-xs text-stone-400">
+                  {Math.max(0, requiredCredits - summary.totalCredits)} credits remaining
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-stone-400">
+                Set a department on your profile to track progress toward your requirement.
+              </p>
+            )}
           </div>
         </div>
       </div>

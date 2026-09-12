@@ -17,10 +17,17 @@ export default function AdminDepartments() {
   const [message, setMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<Department | null>(null);
   const [query, setQuery] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
-    const d = await api.getDepartments();
-    setDepartments(d.departments || []);
+    try {
+      const d = await api.getDepartments();
+      setDepartments(d.departments || []);
+      setLoadError(null);
+    } catch (err: any) {
+      console.error('Failed to load departments', err);
+      setLoadError(err.message || 'Failed to load departments. Try refreshing.');
+    }
   };
 
   useEffect(() => {
@@ -48,6 +55,8 @@ export default function AdminDepartments() {
       title="Departments"
       subtitle="Add or edit departments and their graduation credit requirements."
     >
+      {loadError && <p className="alert-danger">{loadError}</p>}
+
       <div className="space-y-4">
         <h2 className="text-sm font-semibold text-stone-700">Add department</h2>
         <form onSubmit={save} className="grid gap-3 sm:grid-cols-4">

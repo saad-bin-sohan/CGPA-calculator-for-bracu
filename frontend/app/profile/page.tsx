@@ -18,15 +18,42 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [message, setMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
-      const [me, dept] = await Promise.all([api.me().catch(() => null), api.getDepartments()]);
-      if (me) setUser(me);
-      setDepartments(dept.departments || []);
+      // Previously api.getDepartments() had no .catch(), so if it rejected
+      // for any reason it took the whole Promise.all down with it - even
+      // though api.me() had already succeeded - and a genuinely logged-in
+      // user would see "please sign in" with no explanation. allSettled
+      // means one failing call can no longer hide the other's result.
+      const [meResult, deptResult] = await Promise.allSettled([
+        api.me(),
+        api.getDepartments()
+      ]);
+      if (cancelled) return;
+
+      if (meResult.status === 'fulfilled' && meResult.value) {
+        setUser(meResult.value);
+      } else if (meResult.status === 'rejected') {
+        console.error('Failed to load current user', meResult.reason);
+      }
+
+      if (deptResult.status === 'fulfilled') {
+        setDepartments(deptResult.value.departments || []);
+      } else {
+        console.error('Failed to load departments', deptResult.reason);
+        setLoadError(
+          "Couldn't load the department list from the server. You can still update your name below; refresh to try loading departments again."
+        );
+      }
     };
     load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const save = async (e: React.FormEvent) => {
@@ -63,6 +90,8 @@ export default function ProfilePage() {
         <h1 className="font-display text-3xl font-normal text-stone-900">Profile</h1>
         <p className="mt-1.5 text-sm text-stone-500">Manage your name and department settings.</p>
       </div>
+
+      {loadError && <p className="alert-danger">{loadError}</p>}
 
       <div className="flex items-center gap-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-primary-700 font-mono text-sm font-bold text-white">
