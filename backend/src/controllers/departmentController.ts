@@ -3,7 +3,13 @@ import { Department } from '../models/Department.js';
 import { Course } from '../models/Course.js';
 
 export const getDepartments = async (_req: Request, res: Response) => {
-  const departments = await Department.find({ active: true });
+  // { $ne: false } (rather than { active: true }) also matches documents
+  // where `active` is simply absent - e.g. records created before this field
+  // existed on the schema. An exact { active: true } match silently excludes
+  // those forever, since Mongoose's schema `default` only applies to newly
+  // constructed documents, never retroactively to ones already in the
+  // database. Explicit `active: false` (soft-deleted) is still excluded.
+  const departments = await Department.find({ active: { $ne: false } });
   res.json({ departments });
 };
 

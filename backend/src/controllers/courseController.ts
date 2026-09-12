@@ -13,7 +13,9 @@ export const listCourses = async (req: Request, res: Response) => {
 
 export const searchCourses = async (req: Request, res: Response) => {
   const { query = '', department } = req.query as { query?: string; department?: string };
-  const filters: any = { active: true };
+  // See departmentController.getDepartments for why this is $ne: false
+  // rather than an exact active: true match.
+  const filters: any = { active: { $ne: false } };
   if (department) filters.departments = department;
   if (query) filters.code = { $regex: query, $options: 'i' };
   const courses = await Course.find(filters).limit(20);
