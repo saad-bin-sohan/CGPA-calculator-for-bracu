@@ -18,7 +18,7 @@ import {
   EnrollmentInput,
   SemesterTemplate
 } from '../../types';
-import { exportElementToPDF } from '../../utils/pdf';
+import { generateCgpaReportPdf, PdfGenerationError, type CgpaReportInput } from '../../utils/pdf';
 
 const blankEnrollment = (): EnrollmentInput => ({
   courseCode: '',
@@ -48,6 +48,8 @@ export default function DashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [templates, setTemplates] = useState<SemesterTemplate[]>([]);
   const [status, setStatus] = useState<string | null>(null);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -232,6 +234,71 @@ export default function DashboardPage() {
     setStatus('Template applied to your plan.');
   };
 
+  const handleExportPdf = async () => {
+    setPdfError(null);
+    setPdfExporting(true);
+    try {
+      const input: CgpaReportInput = {
+        reportContext: 'Student Dashboard',
+        studentName: userName,
+        departmentName: userDept?.name,
+        departmentCode: userDept?.code,
+        stats: [
+          {
+            label: 'CGPA',
+            value: summary.cgpa.toFixed(Math.min(precision, 10)),
+            sub: `${summary.totalCourses} unique courses`
+          },
+          {
+            label: 'Credits earned',
+            value: `${summary.totalCredits}`,
+            sub: requiredCredits ? `Goal: ${requiredCredits}` : 'No department set'
+          },
+          {
+            label: 'Semesters',
+            value: `${semesters.length}`,
+            sub: 'Planned semesters'
+          },
+          {
+            label: 'Trend',
+            value: trendLabel,
+            sub: `${summary.perSemester.length} semester(s) tracked`
+          }
+        ],
+        requiredCredits,
+        totalCredits: summary.totalCredits,
+        generatedAt: new Date(),
+        // Paired by index - see the identical note in calculator/page.tsx's
+        // handleExportPdf for why this can't be a termName lookup.
+        semesters: semesters.map((semester, index) => ({
+          termName: semester.termName,
+          gpa: summary.perSemester[index]?.gpa ?? 0,
+          credits: summary.perSemester[index]?.credits ?? 0,
+          courses: semester.enrollments.map((enrollment) => ({
+            courseCode: enrollment.courseCode,
+            courseTitle: enrollment.courseTitle,
+            credits: enrollment.credits,
+            gradeLetter: enrollment.gradeLetter,
+            gradePoint: enrollment.gradePoint,
+            percentage: enrollment.percentage,
+            inputMethod: enrollment.inputMethod,
+            countsTowardsCGPA: enrollment.countsTowardsCGPA,
+            countsTowardsCredits: enrollment.countsTowardsCredits
+          }))
+        }))
+      };
+      await generateCgpaReportPdf(input);
+    } catch (err) {
+      setPdfError(
+        err instanceof PdfGenerationError
+          ? err.message
+          : 'Something went wrong while exporting the PDF. Please try again.'
+      );
+    } finally {
+      setPdfExporting(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="mx-auto max-w-md space-y-4 py-20 text-center">
@@ -262,11 +329,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportElementToPDF('dashboard-area', 'cgpa-plan.pdf')}
-          >
+          <Button variant="outline" size="sm" loading={pdfExporting} onClick={handleExportPdf}>
             <FileDown className="h-4 w-4" />
             Export PDF
           </Button>
@@ -278,6 +341,7 @@ export default function DashboardPage() {
       </div>
 
       {loadError && <p className="alert-danger">{loadError}</p>}
+      {pdfError && <p className="alert-danger">{pdfError}</p>}
       {message && <p className="text-sm font-semibold text-success-700">{message}</p>}
       {status && <p className="text-sm font-semibold text-success-700">{status}</p>}
 
@@ -338,7 +402,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-10 lg:grid-cols-[1fr_260px] lg:items-start">
         <div>
-          <div id="dashboard-area">
+          <div>
             {semesters.length === 0 ? (
               <EmptyState
                 title="No semesters saved"

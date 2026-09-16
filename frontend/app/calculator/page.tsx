@@ -17,7 +17,7 @@ import {
   EnrollmentInput,
   SemesterTemplate
 } from '../../types';
-import { exportElementToPDF } from '../../utils/pdf';
+import { generateCgpaReportPdf, PdfGenerationError, type CgpaReportInput } from '../../utils/pdf';
 
 const blankEnrollment = (): EnrollmentInput => ({
   courseCode: '',
@@ -39,6 +39,8 @@ export default function CalculatorPage() {
   const [templates, setTemplates] = useState<SemesterTemplate[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [semesters, setSemesters] = useState<Semester[]>([
     {
       termName: 'Spring 2025',
@@ -193,6 +195,68 @@ export default function CalculatorPage() {
     setStatus('Department template applied.');
   };
 
+  const handleExportPdf = async () => {
+    setPdfError(null);
+    setPdfExporting(true);
+    try {
+      const input: CgpaReportInput = {
+        reportContext: 'Guest Calculator',
+        departmentName: selectedDept?.name,
+        departmentCode: selectedDept?.code,
+        stats: [
+          {
+            label: 'CGPA',
+            value: summary.cgpa.toFixed(Math.min(precision, 10)),
+            sub: `${summary.totalCourses} unique courses`
+          },
+          {
+            label: 'Credits completed',
+            value: `${summary.totalCredits}`,
+            sub: requiredCredits ? `of ${requiredCredits} required` : 'No department selected'
+          },
+          {
+            label: 'Department',
+            value: selectedDept ? selectedDept.code : '—',
+            sub: selectedDept ? selectedDept.name : 'No department selected'
+          }
+        ],
+        requiredCredits,
+        totalCredits: summary.totalCredits,
+        generatedAt: new Date(),
+        // Paired by index, not by termName - names aren't guaranteed unique
+        // (e.g. two semesters can both end up called "Semester 1" after
+        // removals), but computeSummary's perSemester array is produced by
+        // mapping `semesters` directly, so it is always the same length and
+        // order as `semesters` itself.
+        semesters: semesters.map((semester, index) => ({
+          termName: semester.termName,
+          gpa: summary.perSemester[index]?.gpa ?? 0,
+          credits: summary.perSemester[index]?.credits ?? 0,
+          courses: semester.enrollments.map((enrollment) => ({
+            courseCode: enrollment.courseCode,
+            courseTitle: enrollment.courseTitle,
+            credits: enrollment.credits,
+            gradeLetter: enrollment.gradeLetter,
+            gradePoint: enrollment.gradePoint,
+            percentage: enrollment.percentage,
+            inputMethod: enrollment.inputMethod,
+            countsTowardsCGPA: enrollment.countsTowardsCGPA,
+            countsTowardsCredits: enrollment.countsTowardsCredits
+          }))
+        }))
+      };
+      await generateCgpaReportPdf(input);
+    } catch (err) {
+      setPdfError(
+        err instanceof PdfGenerationError
+          ? err.message
+          : 'Something went wrong while exporting the PDF. Please try again.'
+      );
+    } finally {
+      setPdfExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -204,17 +268,14 @@ export default function CalculatorPage() {
             No sign-in required. Your plan is saved in this browser.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => exportElementToPDF('calculator-area', 'cgpa-plan.pdf')}
-        >
+        <Button variant="outline" size="sm" loading={pdfExporting} onClick={handleExportPdf}>
           <FileDown className="h-4 w-4" />
           Export PDF
         </Button>
       </div>
 
       {loadError && <p className="alert-danger">{loadError}</p>}
+      {pdfError && <p className="alert-danger">{pdfError}</p>}
 
       <div className="space-y-3">
         <div className="max-w-xs">
@@ -258,7 +319,7 @@ export default function CalculatorPage() {
 
       <div className="grid gap-10 lg:grid-cols-[1fr_260px] lg:items-start">
         <div>
-          <div id="calculator-area">
+          <div>
             {semesters.length === 0 ? (
               <EmptyState
                 title="No semesters yet"
