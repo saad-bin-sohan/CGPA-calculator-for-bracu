@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileDown, Save, Sigma, Layers, TrendingUp, GraduationCap } from 'lucide-react';
 import SemesterAccordion from '../../components/SemesterAccordion';
@@ -50,6 +50,42 @@ export default function DashboardPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+
+  // Declared here (ahead of the effects below) because the second effect
+  // further down lists this in its dependency array, and that array is
+  // evaluated synchronously during render - it needs applyTemplate to
+  // already exist at that point, not just by the time effects run.
+  const applyTemplate = useCallback(
+    (tpls: SemesterTemplate[], deptId?: string) => {
+      if (!tpls || tpls.length === 0) {
+        setSemesters([
+          {
+            termName: 'Semester 1',
+            enrollments: Array.from({ length: 4 }, () => blankEnrollment())
+          }
+        ]);
+        return;
+      }
+      const mapped: Semester[] = tpls.map((t) => ({
+        termName: t.termName,
+        department: deptId || userDept?._id,
+        enrollments: (t.courses || []).map((c: Course) => ({
+          course: c._id,
+          courseCode: c.code,
+          courseTitle: c.title,
+          credits: c.credits,
+          gradePoint: 0,
+          inputMethod: 'letter',
+          countsTowardsCGPA: c.countsTowardsCGPA,
+          countsTowardsCredits: c.countsTowardsCredits,
+          createdAt: new Date().toISOString()
+        }))
+      }));
+      setSemesters(mapped);
+      setStatus('Template applied to your plan.');
+    },
+    [userDept]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -128,13 +164,22 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
+    // `applyTemplate` is intentionally left out here. This effect must run
+    // exactly once on mount to load initial data - it's what calls
+    // setUserDept itself, and applyTemplate's identity changes whenever
+    // userDept changes, so adding applyTemplate to this array would make
+    // the effect re-fire every time it sets userDept (a feedback loop that
+    // reloads everything again). The applyTemplate call above always passes
+    // its own `deptId` argument explicitly, so this call site never actually
+    // reads the userDept closure that would otherwise make that loop matter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (userDept && templates.length > 0 && semesters.length === 0) {
       applyTemplate(templates);
     }
-  }, [templates, userDept, semesters.length]);
+  }, [templates, userDept, semesters.length, applyTemplate]);
 
   const summary = useMemo(
     () => computeSummary(semesters, precision),
@@ -203,35 +248,6 @@ export default function DashboardPage() {
     setMessage(null);
     for (const sem of semesters) await saveSemester(sem);
     setMessage('All semesters saved.');
-  };
-
-  const applyTemplate = (tpls: SemesterTemplate[], deptId?: string) => {
-    if (!tpls || tpls.length === 0) {
-      setSemesters([
-        {
-          termName: 'Semester 1',
-          enrollments: Array.from({ length: 4 }, () => blankEnrollment())
-        }
-      ]);
-      return;
-    }
-    const mapped: Semester[] = tpls.map((t) => ({
-      termName: t.termName,
-      department: deptId || userDept?._id,
-      enrollments: (t.courses || []).map((c: Course) => ({
-        course: c._id,
-        courseCode: c.code,
-        courseTitle: c.title,
-        credits: c.credits,
-        gradePoint: 0,
-        inputMethod: 'letter',
-        countsTowardsCGPA: c.countsTowardsCGPA,
-        countsTowardsCredits: c.countsTowardsCredits,
-        createdAt: new Date().toISOString()
-      }))
-    }));
-    setSemesters(mapped);
-    setStatus('Template applied to your plan.');
   };
 
   const handleExportPdf = async () => {

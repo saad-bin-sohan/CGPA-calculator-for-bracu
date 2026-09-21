@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FileDown, Building2, Sigma, Layers } from 'lucide-react';
 import SemesterAccordion from '../../components/SemesterAccordion';
 import ProgressBar from '../../components/ProgressBar';
@@ -47,6 +47,42 @@ export default function CalculatorPage() {
       enrollments: Array.from({ length: 4 }, () => blankEnrollment())
     }
   ]);
+
+  // Declared here (ahead of the effects below) because the templates effect
+  // further down lists this in its dependency array, and that array is
+  // evaluated synchronously during render - it needs applyTemplate to
+  // already exist at that point, not just by the time effects run.
+  const applyTemplate = useCallback(
+    (tpls: SemesterTemplate[]) => {
+      if (!tpls || tpls.length === 0) {
+        setSemesters([
+          {
+            termName: 'Planned Semester',
+            enrollments: Array.from({ length: 4 }, () => blankEnrollment())
+          }
+        ]);
+        return;
+      }
+      const mapped: Semester[] = tpls.map((t) => ({
+        termName: t.termName,
+        department: selectedDepartment,
+        enrollments: (t.courses || []).map((c: Course) => ({
+          course: c._id,
+          courseCode: c.code,
+          courseTitle: c.title,
+          credits: c.credits,
+          gradePoint: 0,
+          inputMethod: 'letter',
+          countsTowardsCGPA: c.countsTowardsCGPA,
+          countsTowardsCredits: c.countsTowardsCredits,
+          createdAt: new Date().toISOString()
+        }))
+      }));
+      setSemesters(mapped);
+      setStatus('Department template applied.');
+    },
+    [selectedDepartment]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -119,7 +155,14 @@ export default function CalculatorPage() {
         }
       })
       .catch((err) => console.error('Failed to load templates', err));
-  }, [selectedDepartment]);
+    // `semesters` is intentionally left out here. This effect should only
+    // re-fetch templates when the department changes, not on every
+    // course/grade edit. The `semesters` read above is a one-time "is the
+    // plan still empty" guard evaluated once the fetch resolves, not a
+    // reactive trigger - adding it to the deps array would re-fetch
+    // templates from the API on every keystroke in the course editor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDepartment, applyTemplate]);
 
   const summary = useMemo(
     () => computeSummary(semesters, precision),
@@ -164,35 +207,6 @@ export default function CalculatorPage() {
     } catch (err) {
       console.error('Course search failed', err);
     }
-  };
-
-  const applyTemplate = (tpls: SemesterTemplate[]) => {
-    if (!tpls || tpls.length === 0) {
-      setSemesters([
-        {
-          termName: 'Planned Semester',
-          enrollments: Array.from({ length: 4 }, () => blankEnrollment())
-        }
-      ]);
-      return;
-    }
-    const mapped: Semester[] = tpls.map((t) => ({
-      termName: t.termName,
-      department: selectedDepartment,
-      enrollments: (t.courses || []).map((c: Course) => ({
-        course: c._id,
-        courseCode: c.code,
-        courseTitle: c.title,
-        credits: c.credits,
-        gradePoint: 0,
-        inputMethod: 'letter',
-        countsTowardsCGPA: c.countsTowardsCGPA,
-        countsTowardsCredits: c.countsTowardsCredits,
-        createdAt: new Date().toISOString()
-      }))
-    }));
-    setSemesters(mapped);
-    setStatus('Department template applied.');
   };
 
   const handleExportPdf = async () => {
