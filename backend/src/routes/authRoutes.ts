@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { authenticate, requireStudent } from '../middleware/auth.js';
 import {
   googleLogin,
   login,
@@ -8,6 +7,7 @@ import {
   register,
   updateProfile
 } from '../controllers/authController.js';
+import { authenticate, requireStudent } from '../middleware/auth.js';
 
 const router = Router();
 

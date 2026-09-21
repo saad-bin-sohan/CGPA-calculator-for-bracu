@@ -1,7 +1,7 @@
-import { Department } from '../models/Department.js';
-import { Course } from '../models/Course.js';
-import { SemesterTemplate } from '../models/SemesterTemplate.js';
 import { CourseDefinition, SemesterPlanEntry } from '../data/departments/cse.js';
+import { Course } from '../models/Course.js';
+import { Department } from '../models/Department.js';
+import { SemesterTemplate } from '../models/SemesterTemplate.js';
 
 export async function seedDepartmentCourses(
   departmentCode: string,
@@ -26,9 +26,7 @@ export async function seedDepartmentCourses(
       courseIdByCode.set(courseData.code.toUpperCase(), existing._id.toString());
       // Ensure this department is linked to the course (add if not already present)
       const deptIdStr = department._id.toString();
-      const alreadyLinked = existing.departments.some(
-        (d) => d.toString() === deptIdStr
-      );
+      const alreadyLinked = existing.departments.some((d) => d.toString() === deptIdStr);
       if (!alreadyLinked) {
         existing.departments.push(department._id);
         await existing.save();
@@ -42,7 +40,7 @@ export async function seedDepartmentCourses(
         departments: [department._id],
         countsTowardsCGPA: courseData.countsTowardsCGPA,
         countsTowardsCredits: courseData.countsTowardsCredits,
-        active: true,
+        active: true
       });
       courseIdByCode.set(courseData.code.toUpperCase(), created._id.toString());
     }
@@ -54,7 +52,7 @@ export async function seedDepartmentCourses(
   for (const semPlan of semesterPlan) {
     const existing = await SemesterTemplate.findOne({
       department: department._id,
-      termName: semPlan.termName,
+      termName: semPlan.termName
     });
     if (existing) {
       continue; // Skip — already seeded; admin may have customised it
@@ -77,7 +75,7 @@ export async function seedDepartmentCourses(
       department: department._id,
       termName: semPlan.termName,
       courses: resolvedCourseIds,
-      active: true,
+      active: true
     });
   }
 

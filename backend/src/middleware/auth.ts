@@ -26,6 +26,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
+    // eslint-disable-next-line import/no-named-as-default-member -- jsonwebtoken's own documented usage
     const decoded = jwt.verify(token, env.jwtSecret) as AuthPayload;
     if (decoded.role === 'student' && decoded.userId) {
       const user = await User.findById(decoded.userId);
@@ -37,7 +38,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       req.user = { id: decoded.adminEmail || 'admin', role: 'admin' };
     }
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ message: 'Invalid token' });
   }
 };

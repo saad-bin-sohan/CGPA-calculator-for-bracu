@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
-import { User } from '../models/User.js';
 import { Semester } from '../models/Semester.js';
 import { Settings } from '../models/Settings.js';
+import { User } from '../models/User.js';
 import { computeCGPA } from '../services/gpaCalculator.js';
 
 export const listStudents = async (_req: Request, res: Response) => {
-  const students = await User.find({ role: 'student' }).populate('department').sort({ createdAt: -1 });
+  const students = await User.find({ role: 'student' })
+    .populate('department')
+    .sort({ createdAt: -1 });
   res.json({ students });
 };
 

@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { authenticate, requireStudent } from '../middleware/auth.js';
 import {
   createSemester,
   deleteSemester,
   getSemesters,
   updateSemester
 } from '../controllers/semesterController.js';
+import { authenticate, requireStudent } from '../middleware/auth.js';
 
 const router = Router();
 

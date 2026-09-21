@@ -1,8 +1,8 @@
+import { seedDepartmentCourses } from './departmentSeeder.js';
+import { CSE_COURSES, CSE_SEMESTER_PLAN } from '../data/departments/cse.js';
 import { Department } from '../models/Department.js';
 import { GradeScale } from '../models/GradeScale.js';
 import { Settings } from '../models/Settings.js';
-import { seedDepartmentCourses } from './departmentSeeder.js';
-import { CSE_COURSES, CSE_SEMESTER_PLAN } from '../data/departments/cse.js';
 
 export const seedDefaults = async (): Promise<void> => {
   const departments = [

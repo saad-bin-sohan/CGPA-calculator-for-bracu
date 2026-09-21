@@ -12,5 +12,6 @@ export const signToken = (
     throw new Error('JWT_SECRET is not set');
   }
 
+  // eslint-disable-next-line import/no-named-as-default-member -- jsonwebtoken's own documented usage
   return jwt.sign(payload, env.jwtSecret, { expiresIn });
 };

@@ -1,16 +1,16 @@
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+import morgan from 'morgan';
 import { connectDb } from './config/db.js';
 import { env } from './config/env.js';
-import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-import departmentRoutes from './routes/departmentRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
+import departmentRoutes from './routes/departmentRoutes.js';
 import gradeScaleRoutes from './routes/gradeScaleRoutes.js';
-import settingsRoutes from './routes/settingsRoutes.js';
 import semesterRoutes from './routes/semesterRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import templateRoutes from './routes/templateRoutes.js';
 import { seedDefaults } from './utils/seed.js';
@@ -40,6 +40,7 @@ app.use(
     credentials: true
   })
 );
+// eslint-disable-next-line import/no-named-as-default-member -- Express's own documented usage
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('dev'));
@@ -55,10 +56,17 @@ app.use('/semesters', semesterRoutes);
 app.use('/students', studentRoutes);
 app.use('/templates', templateRoutes);
 
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
-  res.status(500).json({ message: 'Server error' });
-});
+// Express identifies error-handling middleware by checking that the handler
+// function has exactly 4 parameters - removing the unused `_next` here would
+// silently change this into a regular (3-arg) middleware and Express would
+// stop treating it as the error handler.
+app.use(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+);
 
 const start = async () => {
   await connectDb();

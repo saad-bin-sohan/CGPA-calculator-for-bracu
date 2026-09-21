@@ -1,35 +1,60 @@
 import { Request, Response } from 'express';
+import { Course, ICourse } from '../models/Course.js';
 import { GradeScale, IGradeScale } from '../models/GradeScale.js';
-import { Semester } from '../models/Semester.js';
+import { GradeInputMethod, Semester } from '../models/Semester.js';
 import { Settings } from '../models/Settings.js';
-import { computeCGPA } from '../services/gpaCalculator.js';
-import { Course } from '../models/Course.js';
 import { User } from '../models/User.js';
+import { computeCGPA } from '../services/gpaCalculator.js';
 
-const resolveGradePoint = (entry: any, gradeScale: IGradeScale[]): { gradePoint: number; gradeLetter?: string } => {
+/**
+ * Shape of an enrollment entry as the client sends it, before
+ * normalizeEnrollments() fills in gaps from the matched Course and coerces
+ * types. Deliberately looser than IEnrollment (the post-normalization DB
+ * shape): every field here can be absent, and gradePoint may still be a
+ * string at this point (it's run through Number() below).
+ */
+interface RawEnrollmentInput {
+  course?: string;
+  courseCode?: string;
+  courseTitle?: string;
+  credits?: number;
+  gradeLetter?: string;
+  gradePoint?: number | string;
+  percentage?: number;
+  inputMethod?: GradeInputMethod;
+  countsTowardsCGPA?: boolean;
+  countsTowardsCredits?: boolean;
+}
+
+const resolveGradePoint = (
+  entry: RawEnrollmentInput,
+  gradeScale: IGradeScale[]
+): { gradePoint: number; gradeLetter?: string } => {
   if (entry.inputMethod === 'points') {
     return { gradePoint: Number(entry.gradePoint), gradeLetter: entry.gradeLetter };
   }
   if (entry.inputMethod === 'letter' && entry.gradeLetter) {
-    const found = gradeScale.find((g) => g.letter.toUpperCase() === entry.gradeLetter.toUpperCase());
-    return { gradePoint: found ? found.gradePoint : 0, gradeLetter: entry.gradeLetter.toUpperCase() };
+    const gradeLetter = entry.gradeLetter;
+    const found = gradeScale.find((g) => g.letter.toUpperCase() === gradeLetter.toUpperCase());
+    return {
+      gradePoint: found ? found.gradePoint : 0,
+      gradeLetter: gradeLetter.toUpperCase()
+    };
   }
   if (entry.inputMethod === 'percentage' && entry.percentage !== undefined) {
+    const percentage = entry.percentage;
     const found = gradeScale.find(
-      (g) =>
-        !g.isSpecial &&
-        entry.percentage >= g.minPercentage &&
-        entry.percentage <= g.maxPercentage
+      (g) => !g.isSpecial && percentage >= g.minPercentage && percentage <= g.maxPercentage
     );
     if (found) return { gradePoint: found.gradePoint, gradeLetter: found.letter };
   }
   return { gradePoint: 0, gradeLetter: entry.gradeLetter };
 };
 
-const normalizeEnrollments = async (enrollments: any[]) => {
+const normalizeEnrollments = async (enrollments: RawEnrollmentInput[]) => {
   const gradeScale = await GradeScale.find({});
   const settings = (await Settings.findOne({})) || (await Settings.create({}));
-  const coursesMap = new Map<string, any>();
+  const coursesMap = new Map<string, ICourse>();
   return Promise.all(
     enrollments.map(async (entry) => {
       if (entry.course && !coursesMap.has(entry.course)) {
@@ -42,14 +67,14 @@ const normalizeEnrollments = async (enrollments: any[]) => {
         entry.countsTowardsCGPA !== undefined
           ? entry.countsTowardsCGPA
           : course
-          ? course.countsTowardsCGPA
-          : true;
+            ? course.countsTowardsCGPA
+            : true;
       const countsTowardsCredits =
         entry.countsTowardsCredits !== undefined
           ? entry.countsTowardsCredits
           : course
-          ? course.countsTowardsCredits
-          : true;
+            ? course.countsTowardsCredits
+            : true;
       const isLab = course?.category === 'Lab';
       return {
         course: entry.course,

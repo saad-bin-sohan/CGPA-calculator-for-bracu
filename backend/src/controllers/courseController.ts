@@ -1,11 +1,16 @@
 import { Request, Response } from 'express';
-import { Course } from '../models/Course.js';
+import { FilterQuery } from 'mongoose';
+import { Course, ICourse } from '../models/Course.js';
 
 export const listCourses = async (req: Request, res: Response) => {
-  const { department, category, active } = req.query;
-  const filters: any = {};
+  const { department, category, active } = req.query as {
+    department?: string;
+    category?: string;
+    active?: string;
+  };
+  const filters: FilterQuery<ICourse> = {};
   if (department) filters.departments = department;
-  if (category) filters.category = category;
+  if (category) filters.category = category as ICourse['category'];
   if (active !== undefined) filters.active = active === 'true';
   const courses = await Course.find(filters).limit(200);
   res.json({ courses });
@@ -15,7 +20,7 @@ export const searchCourses = async (req: Request, res: Response) => {
   const { query = '', department } = req.query as { query?: string; department?: string };
   // See departmentController.getDepartments for why this is $ne: false
   // rather than an exact active: true match.
-  const filters: any = { active: { $ne: false } };
+  const filters: FilterQuery<ICourse> = { active: { $ne: false } };
   if (department) filters.departments = department;
   if (query) filters.code = { $regex: query, $options: 'i' };
   const courses = await Course.find(filters).limit(20);
@@ -23,8 +28,16 @@ export const searchCourses = async (req: Request, res: Response) => {
 };
 
 export const createCourse = async (req: Request, res: Response) => {
-  const { code, title, credits, category, departments, countsTowardsCGPA, countsTowardsCredits, active } =
-    req.body;
+  const {
+    code,
+    title,
+    credits,
+    category,
+    departments,
+    countsTowardsCGPA,
+    countsTowardsCredits,
+    active
+  } = req.body;
   const existing = await Course.findOne({ code: code.toUpperCase() });
   if (existing) return res.status(400).json({ message: 'Course code already exists' });
   const course = await Course.create({

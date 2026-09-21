@@ -26,5 +26,12 @@ module.exports = {
       }
     ],
     '@typescript-eslint/no-misused-promises': 0
+  },
+  settings: {
+    'import/resolver': {
+      typescript: {
+        project: './tsconfig.json'
+      }
+    }
   }
 };

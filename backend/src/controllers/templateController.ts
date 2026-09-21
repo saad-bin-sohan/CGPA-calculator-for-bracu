@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { SemesterTemplate } from '../models/SemesterTemplate.js';
+import { FilterQuery } from 'mongoose';
+import { ISemesterTemplate, SemesterTemplate } from '../models/SemesterTemplate.js';
 
 export const listTemplates = async (req: Request, res: Response) => {
-  const { department } = req.query;
-  const filters: any = {};
+  const { department } = req.query as { department?: string };
+  const filters: FilterQuery<ISemesterTemplate> = {};
   if (department) filters.department = department;
   const templates = await SemesterTemplate.find(filters).populate('courses').populate('department');
   res.json({ templates });

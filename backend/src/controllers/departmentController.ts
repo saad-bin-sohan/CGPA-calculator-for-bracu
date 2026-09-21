@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Department } from '../models/Department.js';
 import { Course } from '../models/Course.js';
+import { Department } from '../models/Department.js';
 
 export const getDepartments = async (_req: Request, res: Response) => {
   // { $ne: false } (rather than { active: true }) also matches documents
@@ -21,11 +21,7 @@ export const createDepartment = async (req: Request, res: Response) => {
 
 export const updateDepartment = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const department = await Department.findByIdAndUpdate(
-    id,
-    req.body,
-    { new: true }
-  );
+  const department = await Department.findByIdAndUpdate(id, req.body, { new: true });
   if (!department) return res.status(404).json({ message: 'Department not found' });
   res.json({ department });
 };

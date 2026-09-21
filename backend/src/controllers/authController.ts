@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { env } from '../config/env.js';
-import { User } from '../models/User.js';
+import { IUser, User } from '../models/User.js';
 import { AUTH_COOKIE_NAME, buildAuthCookieOptions } from '../utils/cookies.js';
 import { signToken } from '../utils/jwt.js';
 
@@ -14,6 +14,7 @@ export const register = async (req: Request, res: Response) => {
   if (existing) {
     return res.status(400).json({ message: 'Email already registered' });
   }
+  // eslint-disable-next-line import/no-named-as-default-member -- bcryptjs's own documented usage
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await User.create({
     name,
@@ -35,6 +36,7 @@ export const login = async (req: Request, res: Response) => {
   if (!user || !user.passwordHash) {
     return res.status(400).json({ message: 'Invalid credentials' });
   }
+  // eslint-disable-next-line import/no-named-as-default-member -- bcryptjs's own documented usage
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
     return res.status(400).json({ message: 'Invalid credentials' });
@@ -100,7 +102,7 @@ export const logout = async (req: Request, res: Response) => {
     .json({ message: 'Logged out' });
 };
 
-const sanitizeUser = (user: any) => ({
+const sanitizeUser = (user: IUser) => ({
   id: user.id,
   name: user.name,
   email: user.email,

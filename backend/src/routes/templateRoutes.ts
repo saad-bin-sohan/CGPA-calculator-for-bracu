@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin } from '../middleware/auth.js';
 import {
   createTemplate,
   deleteTemplate,
   listTemplates,
   updateTemplate
 } from '../controllers/templateController.js';
+import { authenticate, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
